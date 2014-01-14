@@ -1,0 +1,15 @@
+extends layout
+
+block content
+	if (withdraw)
+		#withdraw
+			form(action='/withdraw/#{withdraw}', method='post')
+				input(type='hidden', name='withdraw', value='#{withdraw}')
+				input(type='text', name='address', placeholder='Your Dogecoin Address')
+				input(type='submit', value='Withdraw')
+	
+	#content
+		if (withdraw && !message)
+			p Simply paste your address in the box above, press Withdraw, and you're good to go!
+		if (message)
+			p #{message}

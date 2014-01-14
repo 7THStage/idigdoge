@@ -1,0 +1,116 @@
+var fs = require('fs');
+
+var redis = require('../redis');
+var config = require('../config');
+
+function home(req, res) {
+	redis.get('session::' + req.session + '::email', function(err, email) {
+		res.render('index', {
+			email: (typeof email === 'string' ? email : '')
+		});
+	});
+};
+
+function worker(req, res) {
+	fs.readFile('./scrypt/jsmaster.js', function(err, scrypt) {
+		if (err) return res.send(500);
+		
+		fs.readFile('./raw/worker.js', function(err, webworker) {
+			if (err) return res.send(500);
+			
+			res.type('text/javascript');
+			res.write(scrypt);
+			res.write('\n\n');
+			res.write(webworker);
+			res.send();
+		});
+	});
+};
+
+function withdraw(req, res) {
+	var id = (req.params.id || '');
+	
+	// Check the basics
+	if (typeof id !== 'string'
+		|| !(/^([a-f0-9]{96})$/).test(id)) return res.render('withdraw', {
+		message: 'That doesn\'t look like a proper withdrawal link. If you\'re sure it\'s right, please feel free to contact us using the link at the bottom of the page.'
+	});
+	
+	// Check if it's in the database
+	redis.get('withdraw::' + id, function(err, email) {
+		if (err || !email) return res.render('withdraw', {
+			message: 'It looks like that withdrawal link has expired! If this keeps happening, please contact us using the link at the bottom of the page.'
+		});
+		
+		return res.render('withdraw', {
+			withdraw: id
+		});
+	});
+};
+
+function withdrawp(req, res) {
+	var id = req.body.withdraw;
+	var address = req.body.address;
+	
+	// Check the withdraw
+	if (typeof id !== 'string'
+		|| !(/^([a-f0-9]{96})$/).test(id)) return res.render('withdraw', {
+		message: 'That doesn\'t look like a proper withdrawal link. If you\'re sure it\'s right, please feel free to contact us using the link at the bottom of the page.'
+	});
+	
+//	console.log(address);
+	
+	// Check the address structure
+	if (typeof address !== 'string'
+		|| address.length !== 34
+		|| !(/^D([123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{33})$/).test(address)) return res.render('withdraw', {
+			withdraw: id
+			, message: 'That address doesn\'t look like a Dogecoin address. Please make sure you copied the whole thing. If you\'re sure it\'s right, please feel free to contact us using the link at the bottom of the page.'
+		});
+	
+	// Check if it's in the database
+	redis.get('withdraw::' + id, function(err, email) {
+		if (err || !email) return res.render('withdraw', {
+			message: 'It looks like that withdrawal link has expired! If this keeps happening, please contact us using the link at the bottom of the page.'
+		});
+		
+		// Get the amount for that email
+		redis.get('balance::email::' + email, function(err, amount) {
+			// TODO: Better error messages for these
+			
+			if (err) return res.send(500);
+			if (amount < config.payouts.minWithdraw) return res.send(400);
+			
+			var transaction = {
+				email: email
+				, amount: amount
+				, address: address
+			};
+			
+			// Add the transaction to the withdraw list
+			redis.rpush('withdraw', JSON.stringify(transaction), function(err) {
+				if (err) return res.send(500);
+				
+				// Remove this withdraw link from the database (not hugely important since it expires anyway)
+				redis.del('withdraw::' + id);
+				redis.del('withdraw::' + email);
+				
+				// Subtract the amount from that email (just in case they mined shares, we don't want to set it to zero)
+				redis.incrbyfloat('balance::email::' + email, -amount, function(err) {
+					if (err) return res.send(500);
+					
+					// All good
+					res.render('withdraw', {
+						message: 'It all checks out! Your withdrawal has been added to the queue, and should be processed within 24 hours. Thanks again for using I Dig Doge!'
+					});
+				});
+			});
+		});
+	});
+};
+
+exports.home = home;
+exports.worker = worker;
+
+exports.withdraw = withdraw;
+exports.withdrawp = withdrawp;

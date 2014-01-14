@@ -1,0 +1,37 @@
+extends layout
+
+block content
+	#mining
+		#rate
+			strong -
+			span Not Mining
+		#balance
+			strong#balance-amount -
+			span Dogecoins
+		
+		form#email-form
+			| Currently mining for
+			input#email(type='email', placeholder='Your Email', value='#{email}')
+			input#email-submit(type='submit', value='Save')
+		
+		p Want to get in on the joy of mining Dogecoin? Now you can do it easily here at I Dig Doge!
+		p Please note that if you don't enter your email, your balance may not be saved when you close your browser.
+		p Try different browsers to get the best hash rate!
+		
+		ul#nav
+			li: a(href='#whatisthis') What Is This?
+			li: a(href='#howitworks') How Does It Work?
+			li: a(href='#withdraw', onclick='return withdraw()') Give Me My Coins!
+	
+	#content
+		a.hide(name='whatisthis')
+		h1 What Is This?
+		p Okay, we'll start from the beginning. There's these things out there on the internet called cryptocurrencies. They're basically digital money. So instead of spending $1 on a candy bar, you could spend 100 Dogecoins.
+		p These currencies are made possible by a process called mining, which has two purposes. For one, it keeps the currency secure by making sure no one is spending more than they have. It also "prints" new money, which is the reward to the people who are mining. It's basically a bunch of math. But it works!
+		p Finally, we get to this site, which is a mining pool. Finding a good answer to these math problems takes a long time, and there's thousands of people attempting it. Pools let people work together on the problems. They solve more problems, and share the income, so it's a win for everyone!
+		
+		a.hide(name='howitworks')
+		h1 How Does It Work?
+		p All you have to do is enter your email address in the box near the top of the page. There's no need to make an account. If people want to give you free money, I don't think that's a problem! When you want to send your coins to your Dogecoin wallet, click <a href="#withdraw" , onclick="return withdraw()">here</a>, and you'll get an email with instructions.
+	
+	script(type='text/javascript', src='/public/coordinator.js')
