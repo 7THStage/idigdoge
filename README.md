@@ -30,7 +30,7 @@ These are also in the `package.json` file, so you can just run `npm install` in 
 - `compile.sh` is a super simple script that minifies and concatenates files for the front end.
 - `config.js` contains the configuration for everything. Bet you didn't see that coming.
 - `payer.js` is a run file. It checks the database for submitted shares, and updates the submitter's balance if the share is valid.
-- `processing/` is the directory that contains the code that actually connects to the Dogecoin RPC-API and processes withdrawal requests. It's a manual process though, which I've detailed below.
+- `processing` is the directory that contains the code that actually connects to the Dogecoin RPC-API and processes withdrawal requests. It's a manual process though, which I've detailed below.
 - `server.js` is a run file. It's where the bulk of the work happens. It serves API requests, connects to the parent pool, and pretty much everything else. It also serves as a handy list of endpoints for everything.
 
 ## Getting Started
@@ -53,20 +53,26 @@ This is a manual process right now, for a lot of reasons. You're welcome to auto
 
 - Connect to the redis database using `redis-cli`.
 - Run `LRANGE withdraw 0 -1`. You'll get something like this:
+
 ```
 1) "{\"email\":\"hello@example.com\",\"amount\":\"1\",\"address\":\"DM7BaRfSxUhvz8eJ9dHeChzEifJaP5poFL\"}"
 2) "{\"email\":\"blank@example.com\",\"amount\":\"1\",\"address\":\"DM7BaRfSxUhvz8eJ9dHeChzEifJaP5poFL\"}"
 ```
+
 - Copy the results into the `data.txt` file, and remove the line numbers and junk from the front. Like so:
+
 ```
 "{\"email\":\"hello@example.com\",\"amount\":\"1\",\"address\":\"DM7BaRfSxUhvz8eJ9dHeChzEifJaP5poFL\"}"
 "{\"email\":\"blank@example.com\",\"amount\":\"1\",\"address\":\"DM7BaRfSxUhvz8eJ9dHeChzEifJaP5poFL\"}"
 ```
+
 - Run the `generate.js` file. This will put the proper information into the `output.json` file, which will look like this since the above addresses are the same:
+
 ```
 {
 	"DM7BaRfSxUhvz8eJ9dHeChzEifJaP5poFL": 2.00000001
 }
 ```
+
 - The `payout.js` file has the line that actually makes the transaction commented out by default. I run it once to make sure the balance will cover the transaction. If it will, I uncomment it, and run it again. When the transaction is made, the transaction ID will be logged. Or an error, depending on what actually happened.
 - To get rid of the processed transactions, run the command `LTRIM withdraw # -1`, replacing the number sign with the number of records processed. In the above example, it would be `2`. This makes sure you don't remove any withdrawal requests that were made since the `LRANGE` command, because that would be bad.
