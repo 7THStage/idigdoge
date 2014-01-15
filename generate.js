@@ -10,6 +10,7 @@ if (!config.stratum.active) return;
 
 // Set up some vars
 var workEvents = [];
+var validJobs = [];
 
 var stratum = new Stratum(config.stratum, function() {
 	var stratum = this;
@@ -48,6 +49,13 @@ stratum.on('mining.notify', function(message) {
 		, cleanJobs: p[8]
 	};
 	
+	// Clean jobs, if we're told to
+	if (p[8]) validJobs.length = 0;
+	
+	// Add it to the valid jobs array
+	if (validJobs.indexOf(p[0]) < 0) validJobs.push(p[0]);
+	
+	// Notify listeners
 	for (var i = 0; i < workEvents.length; i += 1) {
 		(workEvents[i])(work);
 	}
@@ -58,6 +66,9 @@ function onWork(callback) {
 };
 
 function submitWork(params, callback) {
+	// Don't bother if the job isn't valid anymore
+	if (config.rejectAssumedStales && (validJobs.indexOf(params[1]) < 0)) return (typeof callback === 'function' ? callback('Stale Job') : false);
+	
 	stratum.request('mining.submit', params, callback);
 };
 
