@@ -7,6 +7,8 @@ module.exports = {
 	, withdrawTimeout: 24 * 60 * 60 * 1000
 	// The maximum amount of time before a connection is closed when polling for new work
 	, pollTimeout: 30 * 1000
+	// If a job is probably no longer valid, don't bother submitting it; may clash with some types of load balancing
+	, rejectAssumedStales: true
 	// Configuration for outgoing emails
 	, email: {
 		address: 'hello@example.com'
