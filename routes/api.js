@@ -8,10 +8,7 @@ var config = require('../config');
 var generate = require('../generate');
 var scrypt = require('../scrypt/scrypt');
 
-var transport = mailer.createTransport('SES', {
-	AWSAccessKeyID: config.aws.key,
-	AWSSecretKey: config.aws.secret
-});
+var transport = mailer.createTransport(config.email.transport, config.email.settings);
 
 function middleware(req, res, next) {
 	var send = res.send;
@@ -378,7 +375,7 @@ function withdraw(req, res) {
 					
 					transport.sendMail({
 						to: email
-						, from: ('I Dig Doge <' + config.email + '>')
+						, from: ('I Dig Doge <' + config.email.address + '>')
 						, subject: 'Withdraw Your Dogecoins!'
 						, text: emailContent
 					}
