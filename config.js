@@ -7,13 +7,12 @@ module.exports = {
 	, withdrawTimeout: 24 * 60 * 60 * 1000
 	// The maximum amount of time before a connection is closed when polling for new work
 	, pollTimeout: 30 * 1000
-	// The email address withdrawal links will be sent from
-	, email: 'hello@example.com'
-	
-	// AWS is used for sending withdrawal links, so fill in a key and secret that have the ability to send mail, or reconfigure in the routes/api.js file
-	, aws: {
-		key: ''
-		, secret: ''
+	// Configuration for outgoing emails
+	, email: {
+		address: 'hello@example.com'
+		// For information on transport and settings, see the documentation for nodemailer at https://github.com/andris9/Nodemailer#possible-transport-methods
+		, transport: 'Sendmail'
+		, settings: {}
 	}
 	// The default port for the API server; it can also be set using the NODE_PORT environment variable
 	, server: {
