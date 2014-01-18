@@ -78,7 +78,7 @@ function createAndSaveSession(req, res, callback) {
 		maxAge: config.sessionTimeout
 	});
 	
-	redis.set('session::' + req.session, '1', 'EX', config.sessionTimeout, callback);
+	redis.set('session::' + req.session, '1', 'PX', config.sessionTimeout, callback);
 };
 
 function tag(req, res, next) {
@@ -327,7 +327,7 @@ function email(req, res) {
 	if (!(/^(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))$/).test(email)) return res.send(400, 'That doesn\'t look like a valid email address.');
 	
 	// Transfer the balance from this session into their email's account
-	redis.set('session::' + req.session + '::email', email, 'EX', config.sessionTimeout, function(err) {
+	redis.set('session::' + req.session + '::email', email, 'PX', config.sessionTimeout, function(err) {
 		if (err) return;
 		
 		redis.get('balance::session::' + req.session, function(err, balance) {
@@ -362,11 +362,11 @@ function withdraw(req, res) {
 				if (amount < config.payouts.minWithdraw) return res.send(400, 'You must have at least ' + config.payouts.minWithdraw + ' Dogecoin' + (config.payouts.minWithdraw != 1 ? 's' : '') +' in your account before you can make a withdrawal!');
 				
 				var withdrawNumber = crypto.randomBytes(48).toString('hex');
-				redis.set('withdraw::' + withdrawNumber, email, 'EX', config.withdrawTimeout, function(err) {
+				redis.set('withdraw::' + withdrawNumber, email, 'PX', config.withdrawTimeout, function(err) {
 					if (err) return res.send(500);
 					
 					// To prevent anyone getting spammed using my service
-					redis.set('withdraw::' + email, withdrawNumber, 'EX', config.withdrawTimeout);
+					redis.set('withdraw::' + email, withdrawNumber, 'PX', config.withdrawTimeout);
 					
 					// Send the email
 					var emailContent = jade.renderFile('./views/email.jade', {

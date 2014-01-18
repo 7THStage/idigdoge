@@ -1,11 +1,11 @@
 module.exports = {
 	// Google Analytics tracking ID
 	analytics: 'UA-00000000-0'
-	// How long sessions should be stored in the database
+	// How long sessions should be stored in the database, in milliseconds
 	, sessionTimeout: 30 * 24 * 60 * 60 * 1000
-	// How long withdrawal links will last
+	// How long withdrawal links will last, in milliseconds
 	, withdrawTimeout: 24 * 60 * 60 * 1000
-	// The maximum amount of time before a connection is closed when polling for new work
+	// The maximum amount of time before a connection is closed when polling for new work, in milliseconds
 	, pollTimeout: 30 * 1000
 	// If a job is probably no longer valid, don't bother submitting it; may clash with some types of load balancing
 	, rejectAssumedStales: true
