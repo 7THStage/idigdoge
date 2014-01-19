@@ -107,30 +107,6 @@ function workerMessage(e) {
 var workers = [];
 var rate = document.getElementById('rate');
 
-workers.stats = {};
-workers.autoWorker = function() {
-	if (this.totalHashRate() < 1) return;
-	
-	this.stats[this.length] = this.totalHashRate();
-	
-	var stop = false;
-	if (this.length >= 4) stop = true;
-	if (this.stats[this.length] < (this.stats[this.length - 1] * 1.2)) stop = true;
-	
-	// Keep adding
-	if (!stop) return this.addWorker();
-	
-	// Done adding
-	clearInterval(this.autoInterval);
-	
-	// Remove the last worker
-	this.removeWorker();
-	
-	// Analytics, because data is fun for me
-	var hashRate = Math.floor(this.stats[this.length]);
-	ga('send', 'event', 'hashrate', 'js', this.length, hashRate);
-};
-
 workers.totalHashRate = function() {
 	var sum = 0;
 	var i, j, x, y, avg;
@@ -159,10 +135,22 @@ workers.addWorker = function() {
 	
 	workers.push(worker);
 	workers.getwork();
+	
+	document.getElementById('intensity-label').innerHTML = workers.length;
+	
+	if (workers.length == 1) {
+		rate.innerHTML = '<strong>-</strong><span>Warming Up</span>';
+	}
 };
 
 workers.removeWorker = function() {
 	workers.pop().terminate();
+	
+	document.getElementById('intensity-label').innerHTML = workers.length;
+	
+	if (workers.length == 0) {
+		rate.innerHTML = '<strong>-</strong><span>Not Mining</span>';
+	}
 };
 
 workers.sendwork = function(data) {
@@ -211,6 +199,7 @@ workers.getwork = function() {
 	});
 };
 
+var doButtons = false;
 if (typeof Worker === 'undefined') {
 	// Not Supported
 	notify('Mining is not supported in this browser. Please update to the latest version.');
@@ -225,25 +214,35 @@ if (typeof Worker === 'undefined') {
 	});
 } else if ((/(iphone|ipad|android|ios)/i).test(window.navigator.userAgent)) {
 	// Phone or Tablet
-	notify('Mining is not supported on mobile devices. Please use a desktop or laptop computer.');
+	var btn = document.getElementById('start-btn');
+	
+	btn.style.display = 'block';
+	btn.onclick = function() {
+		if (confirm('Mining on mobile may have unexpected side effects, including battery usage and heat production. Please use carefully!')) {
+			btn.style.display = 'none';
+			
+			workers.addWorker();
+			document.getElementById('intensity').style.display = 'block';
+		}
+	};
+	
+	doButtons = true;
 } else {
-	// Check endianness
-	var et = new ArrayBuffer(4);
-	var etu8 = new Uint8Array(et);
-	var etu32 = new Uint32Array(et);
+	workers.addWorker();
+	document.getElementById('intensity').style.display = 'block';
 	
-	etu8[0] = 1;
+	doButtons = true;
+}
+
+if (doButtons) {
+	document.getElementById('up-btn').onclick = function() {
+		if (workers.length < 10) workers.addWorker();
+		else notify('Ten is the maxiumum intensity.');
+	};
 	
-	// True if little endian
-	if (etu32[0] == 1) {
-		workers.addWorker();
-		workers.autoInterval = setInterval(workers.autoWorker.bind(workers), 30000);
-	} else {
-		notify('Mining is not yet supported on this computer. Sorry!');
-		ga('send', 'event', 'nosupport', 'bigendian', {
-			nonInteraction: 1
-		});
-	}
+	document.getElementById('down-btn').onclick = function() {
+		if (workers.length > 0) workers.removeWorker();
+	};
 }
 
 function updateBalance() {
@@ -312,3 +311,11 @@ function withdraw() {
 setTimeout(function() {
 	window.location.reload();
 }, 1000 * 60 * 60 * 2);
+
+// Track Hash Rates Every Two Minutes
+setInterval(function() {
+	var hashRate = Math.floor(workers.totalHashRate());
+	if (hashRate > 1) {
+		ga('send', 'event', 'hashrate', 'js', workers.length, hashRate);
+	}
+}, 1000 * 60 * 2);

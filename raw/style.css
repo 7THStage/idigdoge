@@ -162,6 +162,66 @@ form input[type=submit] {
 	border-color: #468847;
 }
 
+#settings {
+	position: absolute;
+	width: 100%;
+	left: 0;
+	text-align: center;
+}
+#settings button {
+	display: block;
+	margin: 0 auto;
+	border: 0 none;
+	outline: 0 none;
+	background-color: #ffffff;
+	color: #025d8c;
+	border-radius: 5px;
+}
+#settings #start-btn {
+	margin-top: 28px;
+	padding: 0 8px;
+	height: 26px;
+	font: normal 14px/26px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+#settings #up-btn, #settings #down-btn {
+	margin: 5px auto;
+	width: 44px;
+	height: 20px;
+	text-indent: -9999px;
+}
+#settings #up-btn:after {
+	content: '^';
+	text-indent: -9999px;
+	display: block;
+	position: absolute;
+	width: 0;
+	height: 0;
+	margin: -21px 0 0 12px;
+	border: 10px solid transparent;
+	border-bottom-color: #025d8c;
+}
+#settings #down-btn:after {
+	content: 'v';
+	text-indent: -9999px;
+	display: block;
+	position: absolute;
+	width: 0;
+	height: 0;
+	margin: -11px 0 0 12px;
+	border: 10px solid transparent;
+	border-top-color: #025d8c;
+}
+#settings strong {
+	display: block;
+}
+#settings span {
+	display: block;
+	font-size: 14px;
+}
+#settings #intensity, #settings #start-btn {
+	display: none;
+}
+
 @-webkit-keyframes fadeInOut {
 	0% {
 		 opacity: 0;
