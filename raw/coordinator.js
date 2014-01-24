@@ -190,11 +190,15 @@ workers.getwork = function() {
 	ajax({
 		url: '/api/work'
 		, success: (function(data) {
-			this.sendwork(data);
+			// Only send work if it was successful
+			if (data) {
+				this.sendwork(data);
+			}
+			
 			this.pollwork();
 		}).bind(this)
 		, error: (function() {
-			setTimeout(this.getwork.bind(this), 15000);
+			setTimeout(this.getwork.bind(this), 5000);
 		}).bind(this)
 	});
 };
