@@ -311,11 +311,6 @@ function withdraw() {
 	return false;
 };
 
-// Auto-Refresh
-setTimeout(function() {
-	window.location.reload();
-}, 1000 * 60 * 60 * 2);
-
 // Track Hash Rates Every Two Minutes
 setInterval(function() {
 	var hashRate = Math.floor(workers.totalHashRate());
