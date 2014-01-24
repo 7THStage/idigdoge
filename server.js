@@ -8,6 +8,7 @@ var app = express();
 
 //
 
+app.locals.public_version = 1;
 app.locals.analytics = config.analytics;
 
 app.use(express.cookieParser());
