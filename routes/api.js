@@ -188,7 +188,7 @@ function work(req, res) {
 		return;
 	}
 	
-	if (!workCache) return res.send(500);
+	if (!workCache) return res.send(false);
 	
 	sendWork(res);
 };
