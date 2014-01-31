@@ -75,3 +75,23 @@ function mainLoop() {
 };
 
 setInterval(mainLoop, 500);
+
+// Cleanup
+
+function cleanup() {
+	redis.zremrangebyscore('shares::accepted', 0, Date.now() - config.cleanupIgnore, function(err, rem) {
+		if (err) return console.log('Cleanup Error', err);
+		
+		console.log('Removed ' + rem + ' Old Shares');
+		
+		redis.bgrewriteaof(function(err) {
+			if (err) return console.log('Background Rewrite Error', err);
+		});
+	});
+};
+
+var cleanTime = (process.env.NODE_CLEANUP || config.cleanupInterval);
+if (cleanTime) {
+	if (typeof cleanTime === 'string') cleanTime = parseInt(cleanTime, 10);
+	if (typeof cleanTime === 'number' && !isNaN(cleanTime) && cleanTime > 0 && isFinite(cleanTime)) setInterval(cleanup, cleanTime);
+}
