@@ -1,3 +1,13 @@
+function int2hex(i) {
+	var s = i.toString(16);
+	
+	while (s.length < 8) {
+		s = '0' + s;
+	}
+	
+	return s.substr(6, 2) + s.substr(4, 2) + s.substr(2, 2) + s.substr(0, 2);
+};
+
 function urlencode(object) {
 	var q = [];
 	
@@ -78,130 +88,212 @@ function ajax(options) {
 		}
 		
 		xmlhttp.send(body);
-	} else xmlhttp.send();
+	} else {
+		xmlhttp.send();
+	}
 };
 
 function workerMessage(e) {
 	var d = e.data;
 	
-	switch (d.type) {
-		case 'rate':
-			this.rateHistory.unshift(d.rate);
-			if (this.rateHistory.length > 5) this.rateHistory.pop();
-			
-			rate.innerHTML = '<strong>' + Math.floor(workers.totalHashRate()) + '</strong><span>Hashes / Second</span>';
-			break;
-		case 'submit':
-			delete d.type;
-			
-			ajax({
-				method: 'post'
-				, url: '/api/submit'
-				, body: d
-			});
-			
-			break;
+	if (typeof d === 'string') {
+		// Submit
+		ajax({
+			method: 'POST'
+			, url: '/api/submit'
+			, body: {
+				header: d.substr(0, 160)
+				, scrypt: d.substr(160, 64)
+			}
+		});
+	} else {
+		// Calculate rate
+		var hashesPerSecond = e.target.workSize / ((Date.now() - e.target.startedWork) / 1000);
+		
+		e.target.rateHistory.unshift(hashesPerSecond);
+		if (e.target.rateHistory.length > 5) e.target.rateHistory.pop();
+		
+		// Figure out the optimal work size
+		e.target.workSize = Math.floor(hashesPerSecond * 5);
+		
+		// Send new work
+		workers.sendWork(e.target);
 	}
 };
 
 var workers = [];
-var rate = document.getElementById('rate');
 
-workers.totalHashRate = function() {
-	var sum = 0;
-	var i, j, x, y, avg;
+workers.workCache = false;
+workers.awaitingWork = [];
+
+var rate = document.getElementById('rate');
+var pnaclBlock = document.getElementById('pnacl-block');
+
+workers.addWorker = function() {
+	// That's the maximum
+	if (workers.length >= 10) return;
 	
-	x = this.length;
-	for (i = 0; i < x; i += 1) {
-		y = this[i].rateHistory.length;
-		if (y > 0) {
-			avg = 0;
-			for (j = 0; j < y; j += 1) {
-				avg += this[i].rateHistory[j];
+	if (navigator.mimeTypes['application/x-pnacl']) workers.type = 'PNACL';
+	else workers.type = 'JS';
+	
+	switch (workers.type) {
+		case 'JS':
+			var worker = new Worker('/public/worker.js');
+			
+			// Defaults
+			worker.workSize = 1000;
+			worker.rateHistory = [];
+			worker.addEventListener('message', workerMessage, true);
+			
+			workers.push(worker);
+			workers.sendWork(worker);
+			
+			break;
+		case 'PNACL':
+			var worker = document.createElement('embed');
+			
+			// Defaults
+			worker.workSize = 1000;
+			worker.rateHistory = [];
+			worker.setAttribute('src', '/public/module.nmf');
+			worker.setAttribute('type', 'application/x-pnacl');
+			
+			worker.addEventListener('load', function() {
+				workers.sendWork(worker);
+			}, false);
+			worker.addEventListener('message', workerMessage, false);
+			
+			pnaclBlock.appendChild(worker);
+			workers.push(worker);
+			
+			break;
+	}
+	
+	// Get work if we don't have any
+	if (workers.type && !workers.workCache) workers.getWork();
+	
+	// Update the intensity label
+	document.getElementById('intensity-label').innerHTML = workers.length;
+};
+
+workers.removeWorker = function() {
+	// Nothing to remove
+	if (workers.length == 0) return;
+	
+	switch (workers.type) {
+		case 'JS':
+			workers.pop().terminate();
+			
+			break;
+		case 'PNACL':
+			var worker = workers.pop();
+			worker.parentNode.removeChild(worker);
+			
+			break;
+	}
+	
+	// Update the intensity label
+	document.getElementById('intensity-label').innerHTML = workers.length;
+};
+
+workers.sendWork = function(worker) {
+	if (!workers.workCache) return workers.awaitingWork.push(worker);
+	
+	worker.startedWork = Date.now();
+	
+	var message = workers.workCache.data + int2hex(workers.workCache.nonce) + int2hex(workers.workCache.nonce += worker.workSize);
+	
+	worker.postMessage(message);
+};
+
+workers.pollWork = function() {
+	ajax({
+		url: '/api/work'
+		, query: {
+			poll: 'true'
+		}
+		, success: function(data) {
+			// Only send work if it was successful
+			if (data) {
+				workers.workCache.data = data;
+				workers.workCache.nonce = 0;
 			}
-			sum += (avg / y);
+			
+			workers.pollWork();
+		}
+		, error: function() {
+			setTimeout(workers.pollWork, 10000);
+		}
+	});
+};
+
+workers.getWork = function() {
+	ajax({
+		url: '/api/work'
+		, success: function(data) {
+			// Only send work if it was successful
+			if (data) {
+				if (!workers.workCache) workers.workCache = {};
+				
+				workers.workCache.data = data;
+				workers.workCache.nonce = 0;
+				
+				for (var i = 0; i < workers.awaitingWork.length; i += 1) {
+					workers.sendWork(workers.awaitingWork[i]);
+				}
+				
+				workers.awaitingWork.length = 0;
+			}
+			
+			workers.pollWork();
+		}
+		, error: function() {
+			setTimeout(workers.getWork, 5000);
+		}
+	});
+};
+
+workers.getHashRate = function() {
+	var i, j, x, a;
+	
+	// Figure out how many actually have any rates already
+	var count = 0;
+	for (i = 0; i < workers.length; i += 1) {
+		j = workers[i];
+		
+		if (j.rateHistory && j.rateHistory.length > 0) count += 1;
+	}
+	
+	if (count == 0) return false;
+	
+	// There's at least one, so let's do a proper calculation
+	var sum = 0;
+	for (i = 0; i < workers.length; i += 1) {
+		j = workers[i].rateHistory;
+		
+		if (j.length > 0) {
+			a = 0;
+			
+			for (x = 0; x < j.length; x += 1) {
+				a += j[x];
+			}
+			
+			sum += (a / j.length);
 		}
 	}
 	
 	return sum;
 };
 
-workers.addWorker = function() {
-	var worker = new Worker('/public/worker.js');
+workers.updateHashRate = function() {
+	if (workers.length == 0) return rate.innerHTML = '<strong>-</strong><span>Not Mining</span>';
 	
-	worker.rateHistory = [];
+	var hashRate = workers.getHashRate();
 	
-	worker.addEventListener('message', workerMessage, false);
-	
-	workers.push(worker);
-	workers.getwork();
-	
-	document.getElementById('intensity-label').innerHTML = workers.length;
-	
-	if (workers.length == 1) {
-		rate.innerHTML = '<strong>-</strong><span>Warming Up</span>';
-	}
+	if (!hashRate) return rate.innerHTML = '<strong>-</strong><span>Warming Up</span>';
+	else rate.innerHTML = '<strong>' + (hashRate / 1000).toFixed(3) + '</strong><span>Kilohashes</span>';
 };
-
-workers.removeWorker = function() {
-	workers.pop().terminate();
-	
-	document.getElementById('intensity-label').innerHTML = workers.length;
-	
-	if (workers.length == 0) {
-		rate.innerHTML = '<strong>-</strong><span>Not Mining</span>';
-	}
-};
-
-workers.sendwork = function(data) {
-	var workSize = Math.floor(0xffffffff / this.length);
-	var nonceOffset = 0;
-	
-	for (var i = 0; i < this.length; i += 1) {
-		this[i].postMessage({
-			type: 'work'
-			, data: data
-			, nonce: [nonceOffset, nonceOffset += workSize]
-		});
-	}
-};
-
-workers.pollwork = function() {
-	ajax({
-		url: '/api/work'
-		, query: {
-			poll: 'true'
-		}
-		, success: (function(data) {
-			// Connection timed out, reload right away
-			if (!data) return setTimeout(this.pollwork.bind(this), 250);
-			
-			this.sendwork(data);
-			setTimeout(this.pollwork.bind(this), 10000);
-		}).bind(this)
-		, error: (function() {
-			setTimeout(this.pollwork.bind(this), 15000);
-		}).bind(this)
-	});
-};
-
-workers.getwork = function() {
-	// Get the first batch, or when a worker is added, then start polling
-	ajax({
-		url: '/api/work'
-		, success: (function(data) {
-			// Only send work if it was successful
-			if (data) {
-				this.sendwork(data);
-			}
-			
-			this.pollwork();
-		}).bind(this)
-		, error: (function() {
-			setTimeout(this.getwork.bind(this), 5000);
-		}).bind(this)
-	});
-};
+setInterval(workers.updateHashRate, 2500);
 
 var doButtons = false;
 if (typeof Worker === 'undefined') {
@@ -223,9 +315,13 @@ if (typeof Worker === 'undefined') {
 	btn.style.display = 'block';
 	btn.onclick = function() {
 		if (confirm('Mining on mobile may have unexpected side effects, including battery usage and heat production. Please use carefully!')) {
-			btn.style.display = 'none';
-			
 			workers.addWorker();
+			workers.updateHashRate();
+			
+			// Remove the buton
+			btn.parentNode.removeChild(btn);
+			
+			// Show the up / down arrows
 			document.getElementById('intensity').style.display = 'block';
 		}
 	};
@@ -233,11 +329,15 @@ if (typeof Worker === 'undefined') {
 	doButtons = true;
 } else {
 	workers.addWorker();
+	workers.updateHashRate();
+	
+	// Show the up / down arrows
 	document.getElementById('intensity').style.display = 'block';
 	
 	doButtons = true;
 }
 
+// Add click events to the up / down arrows
 if (doButtons) {
 	document.getElementById('up-btn').onclick = function() {
 		if (workers.length < 10) workers.addWorker();
@@ -313,8 +413,10 @@ function withdraw() {
 
 // Track Hash Rates Every Two Minutes
 setInterval(function() {
-	var hashRate = Math.floor(workers.totalHashRate());
-	if (hashRate > 1) {
-		ga('send', 'event', 'hashrate', 'js', workers.length, hashRate);
+	var hashRate = workers.getHashRate();
+	if (hashRate && hashRate > 1) {
+		hashRate = Math.floor(hashRate);
+		
+		ga('send', 'event', 'hashrate', workers.type.toLowerCase(), workers.length, hashRate);
 	}
 }, 1000 * 60 * 2);
