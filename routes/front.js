@@ -12,7 +12,7 @@ function home(req, res) {
 };
 
 function worker(req, res) {
-	fs.readFile('./scrypt/jsmaster.js', function(err, scrypt) {
+	fs.readFile('./scrypt/module.min.js', function(err, scrypt) {
 		if (err) return res.send(500);
 		
 		fs.readFile('./raw/worker.js', function(err, webworker) {

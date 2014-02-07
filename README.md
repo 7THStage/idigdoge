@@ -1,11 +1,5 @@
 # I Dig Doge
 
-## License & Thanks
-
-So I don't know how to license stuff. I just start reading the legalese and my brain shuts down. Either way, I want to thank this guy for his work, which provided a huge speed boost on the client side. I think I've included the appropriate notices in the `scrypt/license.txt` file.
-
-https://github.com/tonyg/js-scrypt
-
 ## Dependencies
 
 There's a few packages from NPM that you'll need.
