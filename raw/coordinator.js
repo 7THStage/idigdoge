@@ -141,7 +141,7 @@ workers.addWorker = function() {
 			var worker = new Worker('/public/worker.js');
 			
 			// Defaults
-			worker.workSize = 1000;
+			worker.workSize = 500;
 			worker.rateHistory = [];
 			worker.addEventListener('message', workerMessage, true);
 			
@@ -153,7 +153,7 @@ workers.addWorker = function() {
 			var worker = document.createElement('embed');
 			
 			// Defaults
-			worker.workSize = 1000;
+			worker.workSize = 500;
 			worker.rateHistory = [];
 			worker.setAttribute('src', '/public/module.nmf');
 			worker.setAttribute('type', 'application/x-pnacl');

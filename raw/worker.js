@@ -1,7 +1,22 @@
 var nonce = 0;
 var maxNonce = 0;
-var header = new Uint8Array(80);
-var scrypt = scrypt_module_factory();
+var scrypt = (function() {
+	var inputPTR = Module._malloc(80);
+	var outputPTR = Module._malloc(32);
+
+	var input = Module.HEAPU8.subarray(inputPTR, inputPTR + 80)
+	var output = Module.HEAPU8.subarray(outputPTR, outputPTR + 32);
+
+	var scrypt = Module.cwrap('SCRYPT', null, ['number', 'number']);
+
+	return {
+		input: input
+		, output: output
+		, hash: function() {
+			scrypt(inputPTR, outputPTR);
+		}
+	};
+})();
 
 self.addEventListener('message', function(e) {
 	unpackWork(e.data);
@@ -30,9 +45,9 @@ function buf2Hex(buf) {
 function unpackWork(msg) {
 	var buf = hex2Buf(msg);
 	
-	// Copy it into the header
+	// Copy it into the input
 	for (var i = 0; i < 76; i += 1) {
-		header[i] = buf[i];
+		scrypt.input[i] = buf[i];
 	}
 	
 	// Set the start and end
@@ -43,19 +58,17 @@ function unpackWork(msg) {
 };
 
 function workLoop() {
-	var hashed;
-	
 	while (nonce < maxNonce) {	
-		header[76] = nonce & 0xff;
-		header[77] = (nonce >> 8) & 0xff;
-		header[78] = (nonce >> 16) & 0xff;
-		header[79] = (nonce >> 24) & 0xff;
+		scrypt.input[76] = nonce & 0xff;
+		scrypt.input[77] = (nonce >> 8) & 0xff;
+		scrypt.input[78] = (nonce >> 16) & 0xff;
+		scrypt.input[79] = (nonce >> 24) & 0xff;
 		
-		hashed = scrypt.crypto_scrypt(header, header, 1024, 1, 1, 32);
+		scrypt.hash();
 		
 		// We're just doing a simple share system, so this is the only check
-		if (hashed[31] == 0 && hashed[30] <= 6) {
-			self.postMessage(buf2Hex(header) + buf2Hex(hashed));
+		if (scrypt.output[31] == 0 && scrypt.output[30] <= 6) {
+			self.postMessage(buf2Hex(scrypt.input) + buf2Hex(scrypt.output));
 		}
 		
 		// Increase the nonce
