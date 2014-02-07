@@ -8,7 +8,7 @@ var app = express();
 
 //
 
-app.locals.public_version = 1;
+app.locals.public_version = 2;
 app.locals.analytics = config.analytics;
 
 app.use(express.cookieParser());
@@ -18,6 +18,7 @@ app.configure('development', function() {
 	
 	app.get('/public/worker.js', routes.front.worker);
 	app.use('/public', express.static(path.join(__dirname, 'raw')));
+	app.use('/public', express.static(path.join(__dirname, 'public')));
 });
 
 app.configure('testing', function() {
