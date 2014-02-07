@@ -1,3 +1,4 @@
+var log = require('./log');
 var redis = require('./redis');
 var config = require('./config');
 var Stratum = require('./stratum');
@@ -16,21 +17,21 @@ var stratum = new Stratum(config.stratum, function() {
 	var stratum = this;
 	
 	this.request('mining.subscribe', function(err, results) {
-		if (err) return console.log('mining.subscribe', 'error', err);
+		if (err) return log.error('mining.subscribe', err);
 		
 		this.extraNonce1 = results[1];
 		this.extraNonce2Size = results[2];
 		
 		this.request('mining.authorize', [stratum.config.username, stratum.config.password], function(err, results) {
-			if (err) return console.log('mining.authorize', 'error', err);
-			if (!results) return console.log('mining.authorize', 'failed');
+			if (err) return log.error('mining.authorize', err);
+			if (!results) return log.error('mining.authorize', 'failed');
 		});
 	});
 });
 
 stratum.on('mining.set_difficulty', function(message) {
 	exports.difficulty = message.params[0];
-	console.log('Difficulty Changed', exports.difficulty);
+	log.info('Difficulty Changed', exports.difficulty);
 });
 
 stratum.on('mining.notify', function(message) {

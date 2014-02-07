@@ -70,7 +70,7 @@ RPCClient.prototype.request = function(method, params, callback) {
 	});
 	
 	request.on('error', function(err) {
-		console.log(err);
+		if (callback) callback(err);
 	});
 	
 	request.write(content);
