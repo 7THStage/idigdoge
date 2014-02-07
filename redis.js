@@ -1,5 +1,6 @@
 var redis = require('redis');
 
+var log = require('./log');
 var config = require('./config');
 
 var client = redis.createClient(config.redis || '');
@@ -8,13 +9,13 @@ var client = redis.createClient(config.redis || '');
 client.ready = false;
 
 client.on('ready', function() {
-	console.log('Redis Is Ready');
+	log.info('Redis Is Ready');
 	
 	this.ready = true;
 });
 
 client.on('error', function(err) {
-	console.log('Redis Is Down', err);
+	log.error('Redis Is Down', err);
 	
 	this.ready = false;
 });

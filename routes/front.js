@@ -58,8 +58,6 @@ function withdrawp(req, res) {
 		message: 'That doesn\'t look like a proper withdrawal link. If you\'re sure it\'s right, please feel free to contact us using the link at the bottom of the page.'
 	});
 	
-//	console.log(address);
-	
 	// Check the address structure
 	if (typeof address !== 'string'
 		|| address.length !== 34

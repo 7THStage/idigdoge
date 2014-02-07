@@ -1,5 +1,7 @@
 var net = require('net');
 
+var log = require('./log');
+
 function Stratum(config, ready) {
 	this.config = config;
 	
@@ -55,7 +57,7 @@ Stratum.prototype.connect = function() {
 							events[i].apply(stratum, [message])
 						}
 					} else {
-						console.log('[INFO]', new Date().toJSON(), 'Stratum Unhandled Event', event);
+						log.info('Stratum Unhandled Event', event);
 					}
 				}
 			}
@@ -69,7 +71,7 @@ Stratum.prototype.connect = function() {
 	});
 	
 	this.connection.on('timeout', function() {
-		console.log('[INFO]', new Date().toJSON(), 'Stratum Timeout', arguments);
+		log.info('Stratum Timeout');
 		
 		this.destroy();
 	});
@@ -78,7 +80,7 @@ Stratum.prototype.connect = function() {
 		// Don't double-reconnect
 		if (stratum.reconnect) return;
 		
-		console.log('[INFO]', new Date().toJSON(), 'Stratum Closed', arguments);
+		log.info('Stratum Closed');
 		
 		stratum.isReady = false;
 		stratum.delay *= 2;
@@ -90,7 +92,7 @@ Stratum.prototype.connect = function() {
 		// Don't double-reconnect
 		if (stratum.reconnect) return;
 		
-		console.log('[ERROR]', new Date().toJSON(), 'Stratum Error', err);
+		log.error('Stratum Error', err);
 		
 		stratum.isReady = false;
 		stratum.delay *= 2;
@@ -105,7 +107,7 @@ Stratum.prototype.request = function(method, params, callback) {
 			callback('Connection Not Ready');
 		}
 		
-		console.log('[INFO]', new Date().toJSON(), 'Connection Not Ready');
+		log.info('Connection Not Ready');
 		return;
 	}
 	

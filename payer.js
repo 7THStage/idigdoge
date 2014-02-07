@@ -1,17 +1,9 @@
+var log = require('./log');
 var redis = require('./redis');
 var config = require('./config');
 var scrypt = require('./scrypt/scrypt');
 
 process.title = 'pyer';
-
-var log = {
-	error: function(err, share) {
-		console.log('[ERROR]', process.pid, err, share);
-	}
-	, info: function(message) {
-		console.log('[INFO]', process.pid, message);
-	}
-};
 
 function penalize(share) {
 	// TODO: Something in this function.
@@ -69,7 +61,7 @@ function parseUserShare(share) {
 
 function mainLoop() {
 	redis.lpop('shares::user', function(err, share) {
-		if (err) return log.error(err, null);
+		if (err) return log.error(err);
 		if (share) parseUserShare(JSON.parse(share));
 	});
 };
@@ -80,12 +72,12 @@ setInterval(mainLoop, 500);
 
 function cleanup() {
 	redis.zremrangebyscore('shares::accepted', 0, Date.now() - config.cleanupIgnore, function(err, rem) {
-		if (err) return console.log('Cleanup Error', err);
+		if (err) return log.error('Cleanup Error', err);
 		
-		console.log('Removed ' + rem + ' Old Shares');
+		log.info('Removed ' + rem + ' Old Shares');
 		
 		redis.bgrewriteaof(function(err) {
-			if (err) return console.log('Background Rewrite Error', err);
+			if (err) return log.error('Background Rewrite Error', err);
 		});
 	});
 };

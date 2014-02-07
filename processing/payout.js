@@ -1,5 +1,6 @@
 var fs = require('fs');
 
+var log = require('../log');
 var RPC = require('../rpc');
 var config = require('../config');
 
@@ -13,21 +14,21 @@ for (var key in file) {
 	sum += file[key];
 }
 
-console.log(sum, file);
+log.info(sum, file);
 
 // If your balance is in another account, move it
-// rpc.request('move', ['Pool', accountName, 100], console.log);
+// rpc.request('move', ['Pool', accountName, 100], log.info);
 
 // List your accounts
-// rpc.request('listaccounts', [], console.log);
+// rpc.request('listaccounts', [], log.info);
 
 rpc.request('getbalance', [accountName], function(err, balance) {
-	if (err) return console.log(err);
+	if (err) return log.error(err);
 	
-	console.log('Balance:', balance);
-	console.log('Paying:', sum);
+	log.info('Balance:', balance);
+	log.info('Paying:', sum);
 	
-	if (balance < sum) return console.log('Not Enough Dogecoins In Account ' + accountName);
+	if (balance < sum) return log.error('Not Enough Dogecoins In Account ' + accountName);
 	
-//	rpc.request('sendmany', [accountName, file, 1, 'Payouts On ' + Date.now()], console.log);
+//	rpc.request('sendmany', [accountName, file, 1, 'Payouts On ' + Date.now()], log.info);
 });
