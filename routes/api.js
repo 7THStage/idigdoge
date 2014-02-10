@@ -7,7 +7,7 @@ var log = require('../log');
 var redis = require('../redis');
 var config = require('../config');
 var generate = require('../generate');
-var scrypt = require('../scrypt/scrypt');
+var scrypt = require('../scrypt/scrypt').scrypt;
 
 var transport = mailer.createTransport(config.email.transport, config.email.settings);
 
@@ -107,6 +107,9 @@ if (generate.available) generate.onWork(function(data) {
 	log.info('Got New Work');
 	
 	workCache = data;
+	
+	// Only bother sending work to those polling if we're cleaning
+	if (!data.cleanJobs) return;
 	
 	for (var i = 0; i < workPolls.length; i += 1) {
 		if (!workPolls[i].connection.destroyed) {
@@ -285,7 +288,7 @@ function submit(req, res) {
 				
 				// Check if the scrypt matches
 				var headerBuffer = new Buffer(userHeader, 'hex');
-				var myScrypt = new Buffer(scrypt(headerBuffer)).toString('hex');
+				var myScrypt = scrypt(headerBuffer).toString('hex');
 				
 				if (userScrypt != myScrypt) return log.info('Failed Scrypt Test');
 				

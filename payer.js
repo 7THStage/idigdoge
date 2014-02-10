@@ -1,7 +1,7 @@
 var log = require('./log');
 var redis = require('./redis');
 var config = require('./config');
-var scrypt = require('./scrypt/scrypt');
+var scrypt = require('./scrypt/scrypt').scrypt;
 
 process.title = 'pyer';
 
@@ -12,12 +12,12 @@ function penalize(share) {
 function parseUserShare(share) {
 	var scryptBuffer = new Buffer(share.scrypt, 'hex');
 	
-	// Check if its passes the difficulty test
+	// Check if it passes the difficulty test
 	if (scryptBuffer[31] != 0 || scryptBuffer[30] > 6) return penalize(share);
 	
 	// Check if the scrypt matches
 	var headerBuffer = new Buffer(share.header, 'hex');
-	var myScrypt = new Buffer(scrypt(headerBuffer)).toString('hex');
+	var myScrypt = scrypt(headerBuffer).toString('hex');
 	
 	if (share.scrypt != myScrypt) return penalize(share);
 	
