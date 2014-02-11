@@ -6,6 +6,7 @@
 
 - Fill out the `config.js` file.
 - Install the dependencies using `npm install`.
+- In order to compile the SASS file, you need to install `ruby` and the `sass gem`. Something like `sudo apt-get install ruby` and `sudo gem install sass`.
 - Install `grunt-cli` globally using `npm install grunt-cli --global`. You may need to `sudo` that.
 - Build all the client-side JS and CSS files using `grunt`.
 - Build the scrypt module by changing into the `scrypt` directory and running `make node`.
