@@ -329,11 +329,11 @@ if (workers.autoStart) {
 } else workers.switchMode('OFF');
 
 // Track Hash Rates Every Two Minutes
-/* setInterval(function() {
+setInterval(function() {
 	var hashRate = workers.getHashRate();
 	if (hashRate && hashRate > 1) {
 		hashRate = Math.floor(hashRate);
 		
 		ga('send', 'event', 'hashrate', workers.type.toLowerCase(), workers.length, hashRate);
 	}
-}, 1000 * 60 * 2); */
+}, 1000 * 60 * 2);
