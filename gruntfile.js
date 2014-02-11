@@ -2,16 +2,13 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json')
 		, uglify: {
-			coordinator: {
+			main: {
 				files: {
-					'public/coordinator.js': 'raw/coordinator.js'
+					'public/main.js': ['raw/util.js', 'raw/scrollnav.js', 'raw/balance.js', 'raw/emailwithdraw.js', 'raw/coordinator.js']
 				}
 			}
 			, worker: {
-				options: {
-					
-				}
-				, files: {
+				files: {
 					'public/worker.part.js': 'raw/worker.js'
 				}
 			}
@@ -22,16 +19,23 @@ module.exports = function(grunt) {
 				, dest: 'public/worker.js'
 			}
 		}
+		, sass: {
+			main: {
+				files: {
+					'public/style.unmin.css': 'raw/style.sass'
+				}
+			}
+		}
 		, cssmin: {
 			main: {
 				files: {
-					'public/style.css': ['raw/style.css']
+					'public/style.css': ['public/style.unmin.css']
 				}
 			}
 		}
 		, clean: {
-			build: ['public/worker.part.js']
-			, all: ['public/worker.js', 'public/coordinator.js', 'public/style.css']
+			build: ['public/worker.part.js', 'public/style.unmin.css']
+			, all: ['.sass-cache', 'public/worker.js', 'public/main.js', 'public/style.css']
 		}
 		, watch: {
 			js: {
@@ -39,17 +43,18 @@ module.exports = function(grunt) {
 				, tasks: ['uglify', 'concat', 'clean:build']
 			}
 			, css: {
-				files: ['raw/*.css']
-				, tasks: ['cssmin']
+				files: ['raw/style.sass']
+				, tasks: ['sass', 'cssmin', 'clean:build']
 			}
 		}
 	});
 	
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-contrib-sass');
 	grunt.loadNpmTasks('grunt-contrib-cssmin');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	
-	grunt.registerTask('default', ['uglify', 'concat', 'cssmin', 'clean:build']);
+	grunt.registerTask('default', ['uglify', 'concat', 'sass', 'cssmin', 'clean:build']);
 };

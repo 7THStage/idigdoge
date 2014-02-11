@@ -1,46 +1,65 @@
-extends layout
-
-block content
-	#mining
-		#settings
-			button#start-btn Start Mining
-			#intensity
-				button#up-btn Increase
-				strong#intensity-label -
-				span Intensity
-				button#down-btn Decrease
-		
-		#rate
-			strong -
-			span Not Mining
-		#balance
-			strong#balance-amount -
-			span Dogecoins
-		
-		form#email-form
-			| Currently mining for
-			input#email(type='email', placeholder='Your Email', value='#{email}')
-			input#email-submit(type='submit', value='Save')
-		
-		p Want to get in on the joy of mining Dogecoin? Now you can do it easily here at I Dig Doge!
-		p Please note that if you don't enter your email, your balance may not be saved when you close your browser.
-		p Try different browsers to get the best hash rate!
-		
-		ul#nav
-			li: a(href='#whatisthis') What Is This?
-			li: a(href='#howitworks') How Does It Work?
-			li: a(href='#withdraw', onclick='return withdraw()') Give Me My Coins!
-	
-	#content
-		a.hide(name='whatisthis')
-		h1 What Is This?
-		p Okay, we'll start from the beginning. There's these things out there on the internet called cryptocurrencies. They're basically digital money. So instead of spending $1 on a candy bar, you could spend 100 Dogecoins.
-		p These currencies are made possible by a process called mining, which has two purposes. For one, it keeps the currency secure by making sure no one is spending more than they have. It also "prints" new money, which is the reward to the people who are mining. It's basically a bunch of math. But it works!
-		p Finally, we get to this site, which is a mining pool. Finding a good answer to these math problems takes a long time, and there's thousands of people attempting it. Pools let people work together on the problems. They solve more problems, and share the income, so it's a win for everyone!
-		
-		a.hide(name='howitworks')
-		h1 How Does It Work?
-		p All you have to do is enter your email address in the box near the top of the page. There's no need to make an account. If people want to give you free money, I don't think that's a problem! When you want to send your coins to your Dogecoin wallet, click <a href="#withdraw" onclick="return withdraw()">here</a>, and you'll get an email with instructions.
-	
-	#pnacl-block
-	script(type='text/javascript', src='/public/coordinator.js?#{public_version}')
+doctype html
+html
+	head
+		include head
+		title I Dig Doge - Cryptocurrency For Everyone
+	body.unsupported
+		#intro.page.grey: .inner
+			h2 Cryptocurrency For Everyone
+			h1.color I Dig Doge
+			#navigation: #nav-float
+				a(href='#getstarted') Crypto-What?
+				a(href='#howitworks') How It Works
+				a(href='#yougotcoins') Your Dogecoins
+		#getstarted.page.color: .inner
+			h1 Crypto-What?
+			p Dogecoin is a cryptocurrency, a totally digital form of money that is more than just a revolutionary way to pay.
+			.columns-3.resizable
+				.column-1: .sides
+					h3 Everyone
+					p It means you can send money to friends and family, pay for products, and anything else. All nearly instantly, and all securely.
+				.column-2: .sides
+					h3 Merchants
+					p You have a new way to accept payments with zero fees for you and no waiting for payment processors.
+				.column-3: .sides
+					h3 Charities
+					p Accept donations from anywhere in the world and in any amount, so you can get money to those who need it.
+		#howitworks.page.white: .inner
+			h1 How It Works
+			.columns-3.resizable
+				.column-1: .sides
+					h3 Network
+					p The Dogecoin network is made up of thousands of computers connected via the internet. They each have a copy of every transaction that has ever taken place. This complete record allows them to make sure every new transaction is valid, and keeps everyone safe.
+				.column-2: .sides
+					h3 Cryptography
+					p It's the backbone of cryptocurrencies. Various algorithms are used in every transaction to make sure coins are going to the right place, and coming from the right people.
+				.column-3: .sides
+					h3 Mining / Digging
+					p Keeping the network safe takes a lot of computing power, but is obviously very important. So people have their computers mine. They occasionally get a Dogecoin reward, and you get a fast and secure network.
+		#yougotcoins.page.grey: .inner
+			h1 Your Dogecoins
+			p.unsupported On many computers, this page actually allows people to mine Dogecoins right in their browser! It looks like yours is unsupported though. Or maybe you've disabled JavaScript?
+			p.optional Want to get a taste of cryptocurrencies? You can actually mine yourself some Dogecoins by clicking <em>Dig</em>!
+			p.auto Since you arrived on this page, your computer has been mining, and you've earned some Dogecoins!
+			
+			.auto.optional
+				.columns-2
+					.column-1.info
+						#rate-block
+							strong -
+							| Not Mining
+						button#mining-toggle-btn.button Loading...
+					.column-2.info
+						#balance-block
+							strong -
+							| Dogecoins
+						button#withdraw-btn.button(onclick='withdraw()') Withdraw
+				
+				form#email-form
+					span Mining For
+					.box: input(type='email', placeholder='Your Email', value='#{email}')
+					.box: input(type='submit', value='Save')
+		#footer.page.color: .inner
+			include footer
+		#pnacl-block
+		script(type='text/javascript', src='/public/main.js?#{public_version}')

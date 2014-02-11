@@ -1,6 +1,7 @@
 var path = require('path');
 var express = require('express');
 
+var log = require('./log');
 var config = require('./config');
 var routes = require('./routes/routes');
 
@@ -14,20 +15,16 @@ app.locals.analytics = config.analytics;
 app.use(express.cookieParser());
 
 app.configure('development', function() {
-	app.use(express.logger('dev'));
+	log.info('Using Development Environment');
 	
-	app.get('/public/worker.js', routes.front.worker);
-	app.use('/public', express.static(path.join(__dirname, 'raw')));
-	app.use('/public', express.static(path.join(__dirname, 'public')));
-});
-
-app.configure('testing', function() {
 	app.use(express.logger('dev'));
 	
 	app.use('/public', express.static(path.join(__dirname, 'public')));
 });
 
 app.configure('production', function() {
+	log.info('Using Production Environment');
+	
 	app.enable('trust proxy');
 });
 
