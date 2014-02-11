@@ -1,15 +1,24 @@
-extends layout
-
-block content
-	if (withdraw)
-		#withdraw
-			form(action='/withdraw/#{withdraw}', method='post')
-				input(type='hidden', name='withdraw', value='#{withdraw}')
-				input(type='text', name='address', placeholder='Your Dogecoin Address')
-				input(type='submit', value='Withdraw')
-	
-	#content
-		if (withdraw && !message)
-			p Simply paste your address in the box above, press Withdraw, and you're good to go!
-		if (message)
-			p #{message}
+doctype html
+html
+	head
+		title Withdraw - I Dig Doge
+		include head
+	body
+		#intro.no-nav.page.grey: .inner
+			h2 Cryptocurrency For Everyone
+			h1.color: a(href='/') I Dig Doge
+		#withdraw.page.color: .inner
+			h1 Withdraw
+			
+			if (withdraw && !message)
+				p You're almost done! All you have to do is enter your Dogecoin address in the box below, then press <em>Withdraw</em>.
+			if (message)
+				p #{message}
+			
+			if (withdraw)
+				form(action='/withdraw/#{withdraw}', method='post')
+					input(type='hidden', name='withdraw', value='#{withdraw}')
+					.box: input(type='text', name='address')
+					.box: input(type='submit', value='Withdraw')
+		#footer.page.white: .inner
+			include footer

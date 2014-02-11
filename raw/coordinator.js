@@ -1,97 +1,4 @@
-function int2hex(i) {
-	var s = i.toString(16);
-	
-	while (s.length < 8) {
-		s = '0' + s;
-	}
-	
-	return s.substr(6, 2) + s.substr(4, 2) + s.substr(2, 2) + s.substr(0, 2);
-};
-
-function urlencode(object) {
-	var q = [];
-	
-	for (var key in object) {
-		q.push(encodeURIComponent(key) + '=' + encodeURIComponent(object[key]));
-	}
-	
-	return q.join('&');
-};
-
-function ajax(options) {
-	options.method = options.method || 'GET';
-	
-	if (!options.url) return;
-	var url = options.url;
-	
-	// Append the query string before anything else
-	if (options.query) {
-		if (typeof options.query === 'object') {
-			url = (url + '?' + urlencode(options.query));
-		} else {
-			url = (url + '?' + options.query);
-		}
-	}
-	
-	// We have to set up handling before the caching
-	function handleResponse(response, xmlhttp) {
-		if (!xmlhttp) xmlhttp = null;
-		
-		if (response.error) {
-			if (typeof options.error === 'function') options.error(response.error, response, xmlhttp);
-		} else {
-			if (typeof options.success === 'function') options.success(response.result, response, xmlhttp);
-		}
-		if (typeof options.complete === 'function') options.complete(response, xmlhttp);
-	};
-	
-	options.type = options.type || 'json';
-	
-	var xmlhttp = new XMLHttpRequest();
-	
-	xmlhttp.open(options.method, url, true);
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == 4) {
-			var response = {
-				status: 500
-				, error: 'The server is currently unavailable.'
-				, result: null
-			};
-			
-			try {
-				response = JSON.parse(xmlhttp.responseText);
-			} catch (e) {}
-			
-			handleResponse(response, xmlhttp);
-		}
-	}
-	
-	if (options.type === 'json') {
-		if ('setRequestHeader' in xmlhttp) {
-			xmlhttp.setRequestHeader('Accept', 'application/json');
-		}
-	}
-	
-	if (options.body) {
-		var body = options.body;
-		
-		if (typeof body === 'object') {
-			if ('overrideMimeType' in xmlhttp) {
-				xmlhttp.overrideMimeType('application/x-www-form-urlencoded');
-			}
-			
-			if ('setRequestHeader' in xmlhttp) {
-				xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-			}
-			
-			body = urlencode(body);
-		}
-		
-		xmlhttp.send(body);
-	} else {
-		xmlhttp.send();
-	}
-};
+// Receives messages from JS and PNACL workers
 
 function workerMessage(e) {
 	var d = e.data;
@@ -121,79 +28,130 @@ function workerMessage(e) {
 	}
 };
 
+// Some elements from the page
+
+var rateBlock = document.getElementById('rate-block');
+var pnaclBlock = document.getElementById('pnacl-block');
+var miningBtn = document.getElementById('mining-toggle-btn');
+
+// The actual worker object, based on a simple array
+
 var workers = [];
 
+// Some variables
+
+workers.mode = 'OFF';
 workers.workCache = false;
 workers.awaitingWork = [];
 
-var rate = document.getElementById('rate');
-var pnaclBlock = document.getElementById('pnacl-block');
+workers.type = (function() {
+	if (navigator.mimeTypes['application/x-pnacl']) return 'PNACL';
+	if (typeof Worker !== 'undefined' && typeof ArrayBuffer !== 'undefined') return 'JS';
+	
+	// Send some messages to HQ, so we can learn more about compatibility
+	if (typeof Worker === 'undefined') ga('send', 'event', 'nosupport', 'noworker', {
+		nonInteraction: 1
+	});
+	if (typeof ArrayBuffer === 'undefined') ga('send', 'event', 'nosupport', 'notypedarrays', {
+		nonInteraction: 1
+	});
+	
+	// Not going to work
+	return false;
+})();
+
+workers.autoStart = (function() {
+	if (!workers.type) return false;
+	if (looksMobile()) return false;
+	
+	return true;
+})();
+
+// Put the proper class on the body element, so the correct messages are displayed
+if (workers.type) {
+	if (workers.autoStart) document.body.className = 'auto';
+	else document.body.className = 'optional';
+} else document.body.className = 'unsupported';
+
+// Some functions
 
 workers.addWorker = function() {
-	// That's the maximum
-	if (workers.length >= 10) return;
+	if (!workers.type) return;
 	
-	if (navigator.mimeTypes['application/x-pnacl']) workers.type = 'PNACL';
-	else workers.type = 'JS';
+	// Don't go over the maximum
+	if (workers.length >= 8) return;
+	
+	var worker;
 	
 	switch (workers.type) {
 		case 'JS':
-			var worker = new Worker('/public/worker.js');
+			worker = new Worker('/public/worker.js');
 			
-			// Defaults
-			worker.workSize = 500;
-			worker.rateHistory = [];
-			worker.addEventListener('message', workerMessage, true);
-			
-			workers.push(worker);
+			worker.workSize = 250;
 			workers.sendWork(worker);
-			
 			break;
 		case 'PNACL':
-			var worker = document.createElement('embed');
-			
-			// Defaults
-			worker.workSize = 500;
-			worker.rateHistory = [];
+			worker = document.createElement('embed');
 			worker.setAttribute('src', '/public/module.nmf');
 			worker.setAttribute('type', 'application/x-pnacl');
+			pnaclBlock.appendChild(worker);
 			
+			worker.workSize = 500;
 			worker.addEventListener('load', function() {
 				workers.sendWork(worker);
 			}, false);
-			worker.addEventListener('message', workerMessage, false);
-			
-			pnaclBlock.appendChild(worker);
-			workers.push(worker);
-			
 			break;
 	}
 	
-	// Get work if we don't have any
-	if (workers.type && !workers.workCache) workers.getWork();
+	worker.rateHistory = [];
 	
-	// Update the intensity label
-	document.getElementById('intensity-label').innerHTML = workers.length;
+	workers.push(worker);
+	
+	worker.addEventListener('message', workerMessage, false);
+	
+	if (!workers.workCache) workers.getWork();
 };
 
 workers.removeWorker = function() {
-	// Nothing to remove
-	if (workers.length == 0) return;
+	// Make sure there's something to remove
+	if (!workers.length) return;
+	
+	var worker = workers.pop();
 	
 	switch (workers.type) {
 		case 'JS':
-			workers.pop().terminate();
-			
+			worker.terminate();
 			break;
 		case 'PNACL':
-			var worker = workers.pop();
 			worker.parentNode.removeChild(worker);
-			
 			break;
 	}
+};
+
+workers.findOptimal = function() {
+	workers.findOptimalTimeout = null;
 	
-	// Update the intensity label
-	document.getElementById('intensity-label').innerHTML = workers.length;
+	// Reset
+	if (workers.length == 0) {
+		workers.addWorker();
+		workers.lastHashRate = 0;
+		workers.findOptimalTimeout = setTimeout(workers.findOptimal, 20 * 1000);
+		return;
+	}
+	
+	// Don't go over the limit
+	if (workers.length >= 8) return;
+	
+	// Figure out if the hash rate had a increase worth keeping
+	var newHashRate = workers.getHashRate();
+	if (newHashRate < (workers.lastHashRate * 1.1)) return workers.removeWorker();
+	
+	// Save the new hash rate
+	workers.lastHashRate = newHashRate;
+	
+	// Add a new worker, and get ready to do it all again
+	workers.addWorker();
+	workers.findOptimalTimeout = setTimeout(workers.findOptimal, 30 * 1000);
 };
 
 workers.sendWork = function(worker) {
@@ -201,9 +159,12 @@ workers.sendWork = function(worker) {
 	
 	worker.startedWork = Date.now();
 	
-	var message = workers.workCache.data + int2hex(workers.workCache.nonce) + int2hex(workers.workCache.nonce += worker.workSize);
+	// Form the message
+	var start = workers.workCache.nonce;
+	var end = workers.workCache.nonce += worker.workSize;
+	var msg = workers.workCache.data + int2hex(start) + int2hex(end);
 	
-	worker.postMessage(message);
+	worker.postMessage(msg);
 };
 
 workers.pollWork = function() {
@@ -218,7 +179,7 @@ workers.pollWork = function() {
 				workers.workCache.data = data;
 				workers.workCache.nonce = 0;
 			}
-			
+
 			workers.pollWork();
 		}
 		, error: function() {
@@ -234,17 +195,17 @@ workers.getWork = function() {
 			// Only send work if it was successful
 			if (data) {
 				if (!workers.workCache) workers.workCache = {};
-				
+
 				workers.workCache.data = data;
 				workers.workCache.nonce = 0;
-				
+
 				for (var i = 0; i < workers.awaitingWork.length; i += 1) {
 					workers.sendWork(workers.awaitingWork[i]);
 				}
-				
+
 				workers.awaitingWork.length = 0;
 			}
-			
+
 			workers.pollWork();
 		}
 		, error: function() {
@@ -255,168 +216,124 @@ workers.getWork = function() {
 
 workers.getHashRate = function() {
 	var i, j, x, a;
-	
+
 	// Figure out how many actually have any rates already
 	var count = 0;
 	for (i = 0; i < workers.length; i += 1) {
 		j = workers[i];
-		
+
 		if (j.rateHistory && j.rateHistory.length > 0) count += 1;
 	}
-	
+
 	if (count == 0) return false;
-	
+
 	// There's at least one, so let's do a proper calculation
 	var sum = 0;
 	for (i = 0; i < workers.length; i += 1) {
 		j = workers[i].rateHistory;
-		
+
 		if (j.length > 0) {
 			a = 0;
-			
+
 			for (x = 0; x < j.length; x += 1) {
 				a += j[x];
 			}
-			
+
 			sum += (a / j.length);
 		}
 	}
-	
+
 	return sum;
 };
 
-workers.updateHashRate = function() {
-	if (workers.length == 0) return rate.innerHTML = '<strong>-</strong><span>Not Mining</span>';
+workers.updateInfo = function() {
+	if (workers.length == 0) return rateBlock.innerHTML = '<strong>-</strong>Not Mining';
 	
 	var hashRate = workers.getHashRate();
 	
-	if (!hashRate) return rate.innerHTML = '<strong>-</strong><span>Warming Up</span>';
-	else rate.innerHTML = '<strong>' + (hashRate / 1000).toFixed(3) + '</strong><span>Kilohashes</span>';
+	if (!hashRate) return rateBlock.innerHTML = '<strong>-</strong>Warming Up';
+	else rateBlock.innerHTML = '<strong>' + significant4(hashRate / 1000) + '</strong>Kilohashes';
 };
-setInterval(workers.updateHashRate, 2500);
+setInterval(workers.updateInfo, 2500);
 
-var doButtons = false;
-if (typeof Worker === 'undefined') {
-	// Not Supported
-	notify('Mining is not supported in this browser. Please update to the latest version.');
-	ga('send', 'event', 'nosupport', 'noworker', {
-		nonInteraction: 1
-	});
-} else if (typeof Uint8Array === 'undefined') {
-	// Not Supported
-	notify('Mining is not supported in this browser. Please update to the latest version.');
-	ga('send', 'event', 'nosupport', 'notypedarrays', {
-		nonInteraction: 1
-	});
-} else if ((/(iphone|ipad|android|ios)/i).test(window.navigator.userAgent)) {
-	// Phone or Tablet
-	var btn = document.getElementById('start-btn');
+workers.switchMode = function(nm) {
+	// Check if we're supported
+	if (!workers.type) return;
 	
-	btn.style.display = 'block';
-	btn.onclick = function() {
-		if (confirm('Mining on mobile may have unexpected side effects, including battery usage and heat production. Please use carefully!')) {
-			workers.addWorker();
-			workers.updateHashRate();
+	if (workers.mode == 'AUTO' && nm != 'AUTO' && workers.findOptimalTimeout) {
+		clearTimeout(workers.findOptimalTimeout);
+		workers.findOptimalTimeout = null;
+	}
+	
+	if (looksMobile() && nm != 'OFF') {
+		if (!confirm('Mining on a mobile device will increase battery usage and heat production. Please use carefully!')) return;
+	}
+	
+	switch (nm) {
+		case 'OFF':
+			while (workers.length) {
+				workers.removeWorker();
+			}
 			
-			// Remove the buton
-			btn.parentNode.removeChild(btn);
+			miningBtn.innerHTML = 'Dig';
+			miningBtn.onclick = function() {
+				workers.switchMode('SLOW');
+			};
 			
-			// Show the up / down arrows
-			document.getElementById('intensity').style.display = 'block';
-		}
-	};
+			workers.mode = 'OFF';
+			localStorage.setItem('mode', 'OFF');
+			break;
+		case 'AUTO':
+			while (workers.length > 1) {
+				workers.removeWorker();
+			}
+			
+			if (workers.length) {
+				workers.lastHashRate = 0;
+				workers.findOptimalTimeout = setTimeout(workers.findOptimal, 15 * 1000);
+			} else workers.findOptimal();
+			
+			miningBtn.innerHTML = 'Stop';
+			miningBtn.onclick = function() {
+				workers.switchMode('OFF');
+			};
+			
+			workers.mode = 'AUTO';
+			localStorage.setItem('mode', 'AUTO');
+			break;
+		case 'SLOW':
+			if (workers.length > 1) {
+				while (workers.length > 1) {
+					workers.removeWorker();
+				}
+			} else if (workers.length == 0) workers.addWorker();
+			
+			miningBtn.innerHTML = 'Find Max Speed';
+			miningBtn.onclick = function() {
+				workers.switchMode('AUTO');
+			};
+			
+			workers.mode = 'SLOW';
+			localStorage.setItem('mode', 'SLOW');
+			break;
+	}
 	
-	doButtons = true;
-} else {
-	workers.addWorker();
-	workers.updateHashRate();
-	
-	// Show the up / down arrows
-	document.getElementById('intensity').style.display = 'block';
-	
-	doButtons = true;
-}
-
-// Add click events to the up / down arrows
-if (doButtons) {
-	document.getElementById('up-btn').onclick = function() {
-		if (workers.length < 10) workers.addWorker();
-		else notify('Ten is the maxiumum intensity.');
-	};
-	
-	document.getElementById('down-btn').onclick = function() {
-		if (workers.length > 0) workers.removeWorker();
-	};
-}
-
-function updateBalance() {
-	ajax({
-		url: '/api/balance'
-		, success: function(amount) {
-			amount = Math.floor(amount * 1000) / 1000;
-			document.getElementById('balance-amount').innerHTML = amount;
-		}
-	});
-};
-updateBalance(); setInterval(updateBalance, 60000);
-
-function notify(message, c) {
-	var notice = document.createElement('div');
-	var noticeID = 'notice' + Math.random().toString().substr(2);
-	
-	notice.id = noticeID;
-	notice.className = 'notice' + (c ? ' ' + c : '');
-	notice.innerHTML = message;
-	
-	document.getElementById('header').appendChild(notice);
-	
-	setTimeout(function() {
-		notice.parentNode.removeChild(notice);
-	}, 5000);
+	workers.updateInfo();
 };
 
-document.getElementById('email-form').addEventListener('submit', function(e) {
-	if ('preventDefault' in e) e.preventDefault();
+if (workers.autoStart) {
+	var savedMode = localStorage.getItem('mode');
 	
-	var email = document.getElementById('email').value;
-	ajax({
-		method: 'post'
-		, url: '/api/email'
-		, body: {
-			email: email
-		}
-		, success: function() {
-			notify('Your email has been saved.', 'success');
-			updateBalance();
-		}
-		, error: function(message) {
-			notify(message, 'error');
-		}
-	});
-	
-	return false;
-}, false);
-
-function withdraw() {
-	ajax({
-		url: '/api/withdraw'
-		, success: function(message) {
-			notify(message, 'success');
-		}
-		, error: function(message) {
-			notify(message, 'error');
-		}
-	});
-	
-	return false;
-};
+	if (savedMode) workers.switchMode(savedMode);
+	else workers.switchMode('SLOW');
+} else workers.switchMode('OFF');
 
 // Track Hash Rates Every Two Minutes
-setInterval(function() {
+/* setInterval(function() {
 	var hashRate = workers.getHashRate();
 	if (hashRate && hashRate > 1) {
 		hashRate = Math.floor(hashRate);
 		
 		ga('send', 'event', 'hashrate', workers.type.toLowerCase(), workers.length, hashRate);
 	}
-}, 1000 * 60 * 2);
+}, 1000 * 60 * 2); */

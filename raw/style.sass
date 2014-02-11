@@ -1,0 +1,385 @@
+@import url("http://fonts.googleapis.com/css?family=Oswald:400,300")
+
+// Variables
+// $color-color: #c6491a
+$color-color: #bfa76f
+$color-grey: #333333
+$color-white: #fafafa
+
+// Helpers
+=respond-to($name)
+	@if $name == small
+		@media only screen and (max-width: 610px)
+			@content
+	@if $name == big
+		@media only screen and (min-width: 611px)
+			@content
+=retina
+	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi)
+		@content
+=background-size($size)
+	-webkit-background-size: $size $size
+	-moz-background-size: $size $size
+	-o-background-size: $size $size
+	background-size: $size $size
+=fancy-font-normal
+	font-family: "Oswald", "HelveticaNeueCondensed", "HelveticaNeue-Condensed", "Helvetica Neue Condensed", "HelveticaNeueRomanCondensed", "HelveticaNeue-Roman-Condensed", "Helvetica Neue Roman Condensed", "HelveticaNeue-CondensedBold", "HelveticaNeue", "Helvetica Neue", "HelveticaNeueRoman", "HelveticaNeue-Roman", "Helvetica Neue Roman", "TeXGyreHerosCnRegular", "Helvetica", "Tahoma", "Geneva", "Arial Narrow", "Arial", sans-serif
+	font-weight: 400
+	font-stretch: condensed
+=fancy-font-light
+	font-family: "Oswald", "HelveticaNeueLightCondensed", "HelveticaNeue-Light-Condensed", "Helvetica Neue Light Condensed", "HelveticaNeue-CondensedBold", "HelveticaNeueLight", "HelveticaNeue-Light", "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue", "TeXGyreHerosCnRegular", "Helvetica", "Tahoma", "Geneva", "Arial Narrow", "Arial", sans-serif
+	font-weight: 300
+	font-stretch: condensed
+=normal-font-light
+	font-family: "HelveticaNeueLight", "HelveticaNeue-Light", "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue", "TeXGyreHerosRegular", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif
+	font-weight: 300
+	font-stretch: normal
+=transition($t)
+	-webkit-transition: $t
+	-moz-transition: $t
+	-o-transition: $t
+	transition: $t
+=animation($t)
+	-webkit-animation: $t
+	animation: $t
+=placeholderColor($selector, $color)
+	#{$selector}::-webkit-input-placeholder
+		color: $color
+	#{$selector}:-moz-placeholder
+		color: $color
+	#{$selector}::-moz-placeholder
+		color: $color
+	#{$selector}:-ms-input-placeholder
+		color: $color
+
+// Some Basics
+*
+	margin: 0
+	padding: 0
+
+a
+	color: inherit
+
+body
+	+normal-font-light
+	font-size: 16px
+	line-height: 1
+	text-align: center
+	background-color: $color-white
+
+// Prevent iOS changing font sizes on small devices
++respond-to(small)
+	html, body
+		-webkit-text-size-adjust: none
+
+// Hide the PNACL block
+#pnacl-block
+	width: 0
+	height: 0
+	overflow: hidden
+	position: absolute
+
+// Notifications
+.notice
+	display: block
+	position: fixed
+	right: 0
+	bottom: 0
+	left: 0
+	font-size: 14px
+	padding: 12px
+	line-height: 1.3
+	border-top: 5px solid
+
+	color: #3a87ad
+	background-color: #d9edf7
+	border-color: #3a87ad
+
+	+animation(fadeInOut 5s linear 0s 1 forwards)
+.notice.error
+	color: #b94a48
+	background-color: #f2dede
+	border-color: #b94a48
+.notice.success
+	color: #468847
+	background-color: #dff0d8
+	border-color: #468847
+
+// Mining Status
+body .auto, body .optional, body .unsupported
+	display: none
+body.auto .auto
+	display: block
+body.optional .optional
+	display: block
+body.unsupported .unsupported
+	display: block
+
+// Headers
+h1, h2, h3
+	+fancy-font-normal
+	line-height: 1.3
+	letter-spacing: 2px
+	
+	a
+		text-decoration: none
+h1
+	margin-bottom: 30px
+	font-size: 60px
+	text-transform: uppercase
+	
+	+respond-to(small)
+		font-size: 36px
+h2
+	font-size: 18px
+	
+	+respond-to(small)
+		font-size: 16px
+		letter-spacing: 1px
+h3
+	font-size: 24px
+	letter-spacing: 1px
+
+// Buttons
+.button
+	display: inline-block
+	padding: 12px 24px
+	border: 1px solid $color-white
+	outline: 0 none
+	background-color: transparent
+	font: inherit
+	text-decoration: none
+	border-radius: 5px
+	font-size: 18px
+	line-height: 1
+	letter-spacing: 1px
+	color: $color-white
+	cursor: pointer
+	+transition(background-color 0.3s)
+.button:hover
+	background-color: rgba(0, 0, 0, 0.15)
+.button.grey
+	border-color: $color-grey
+	color: $color-grey
+.button.color
+	border-color: $color-color
+	color: $color-color
+
+// Columns
+// TODO: General cleanup and less repeating
+.columns-2, .columns-3
+	display: block
+	overflow: auto
+	margin-top: 30px
+
+	.sides
+		padding-left: 12px
+		padding-right: 12px
+
+		+respond-to(small)
+			padding-left: 0
+			padding-right: 0
+.columns-2 .column-1, .columns-3 .column-1
+	.sides
+		padding-left: 0
+.columns-2 .column-2, .columns-3 .column-3
+	.sides
+		padding-right: 0
+.columns-2
+	.column-1, .column-2
+		display: block
+		float: left
+		width: 50%
+.columns-3
+	.column-1, .column-2, .column-3
+		display: block
+		float: left
+		width: 33%
+.columns-2.resizable, .columns-3.resizable
+	.column-1, .column-2, .column-3
+		+respond-to(small)
+			float: none
+			width: auto
+	
+	.column-2, .column-3
+		+respond-to(small)
+			margin-top: 18px
+
+// Common Stuff
+.page p
+	line-height: 1.4
+
+// Default Page Layout
+.inner
+	padding: 48px 24px
+
+	+respond-to(small)
+		padding: 42px 12px
+
+// Forms
+form
+	margin-top: 30px
+	
+	span, .box
+		vertical-align: middle
+	.box
+		border: 1px solid $color-white
+		border-radius: 5px
+		display: inline-block
+		margin-left: 6px
+	input
+		height: 28px
+		display: block
+		padding: 0 6px
+		border: 0 none
+		outline: 0 none
+		background-color: transparent
+		color: $color-white
+		text-decoration: none
+		font-size: 16px
+		letter-spacing: 1px
+		cursor: pointer
+		border-radius: 5px
+		-webkit-appearance: none
+		+normal-font-light
+	input[type=text], input[type=email]
+		width: 220px
+		
+		+respond-to(small)
+			width: 130px
+	input[type=submit]
+		padding-left: 12px
+		padding-right: 12px
+		+transition(background-color 0.3s)
+		
+	input[type=submit]:hover
+		background-color: rgba(0, 0, 0, 0.15)
+	+placeholderColor("input", $color-white)
+
+// Text Colors
+.grey
+	color: $color-grey
+.color
+	color: $color-color
+.white
+	color: $color-white
+
+// Page Colors
+.page.grey
+	background-color: $color-grey
+	color: $color-white
+.page.white
+	background-color: $color-white
+	color: $color-grey
+.page.color
+	background-color: $color-color
+	color: $color-white
+
+// Pages
+#intro
+	h1
+		font-size: 60px
+	
+	+respond-to(small)
+		.inner
+			padding-left: 0
+			padding-right: 0
+			padding-bottom: 0
+	
+	#navigation
+		min-height: 44px
+		
+		a
+			display: block
+			border-top: 1px solid $color-white
+			padding: 12px 0
+			text-decoration: none
+			font-size: 18px
+			letter-spacing: 1px
+			+transition(background-color 0.3s)
+			
+			+respond-to(big)
+				display: inline-block
+				padding: 12px 24px
+				margin: 0 6px
+				border: 1px solid $color-white
+				border-radius: 5px
+		a:hover
+			background-color: rgba(0, 0, 0, 0.15)
+		
+		+respond-to(big)
+			#nav-float
+				+transition(box-shadow 0s)
+			
+			#nav-float.floating
+				position: fixed
+				top: 0
+				left: 0
+				right: 0
+				padding: 12px 0
+				background-color: $color-grey
+				box-shadow: 0px 0px 24px rgba(0, 0, 0, 0.3)
+				+transition(box-shadow 0.5s)
+#intro.no-nav
+	h1
+		margin-bottom: 0
+	
+	+respond-to(small)
+		.inner
+			padding-bottom: 42px
+
+#getstarted
+	.columns-3
+		h3
+			margin-bottom: 6px
+
+#howitworks
+	.columns-3
+		h3
+			margin-bottom: 6px
+
+#yougotcoins
+	.info
+		line-height: 1.2
+		
+		strong
+			display: block
+			padding-bottom: 8px
+			
+			+fancy-font-light
+			line-height: 1
+			letter-spacing: 1px
+			font-size: 48px
+	
+	// Controls
+	.button
+		padding: 6px 12px
+		font-size: 16px
+	.columns-2
+		.button
+			margin-top: 12px
+
+#footer
+	font-size: 12px
+
+	.inner
+		padding: 24px 12px
+
+@-webkit-keyframes fadeInOut
+	0%
+		opacity: 0
+	5%
+		opacity: 1
+	95%
+		opacity: 1
+	100%
+		opacity: 0
+@keyframes fadeInOut
+	0%
+		opacity: 0
+	5%
+		opacity: 1
+	95%
+		opacity: 1
+	100%
+		opacity: 0

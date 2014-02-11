@@ -1,45 +1,47 @@
 # I Dig Doge
 
-## Dependencies
-
-There's a few packages from NPM that you'll need.
-
-### Development
-
-- `uglify-js` for minifying JS
-- `sqwish` for minifying CSS
-
-### Development & Production
-
-These are also in the `package.json` file, so you can just run `npm install` in the proper directory and it will get these for you.
-
-- `express`
-- `jade`
-- `nodemailer`
-- `redis`
-- `hiredis`
-
-## Some Important Files
-
-- `compile.sh` is a super simple script that minifies and concatenates files for the front end.
-- `config.js` contains the configuration for everything. Bet you didn't see that coming.
-- `payer.js` is a run file. It checks the database for submitted shares, and updates the submitter's balance if the share is valid.
-- `processing` is the directory that contains the code that actually connects to the Dogecoin RPC-API and processes withdrawal requests. It's a manual process though, which I've detailed below.
-- `server.js` is a run file. It's where the bulk of the work happens. It serves API requests, connects to the parent pool, and pretty much everything else. It also serves as a handy list of endpoints for everything.
-
 ## Getting Started
 
+### First Run
+
 - Fill out the `config.js` file.
-- Start up the server using something like `node server.js`.
-- Start up the processor using something like `node payer.js`.
+- Install the dependencies using `npm install`.
+- Install `grunt-cli` globally using `npm install grunt-cli --global`. You may need to `sudo` that.
+- Build all the client-side JS and CSS files using `grunt`.
+- Build the scrypt module by changing into the `scrypt` directory and running `make node`.
+
+### Running
+
+I've gotten a few questions about running the application. So here's some snippets that will hopefully help people get started.
+
+- First of all, there's `node file.js`. It's your basic run command.
+- If you want to log the output to a file, you can add '>> /tmp/file.log'.
+- Putting `&` at the end of the command runs it in the background, so it won't be killed when you close your terminal window or SSH connection.
+- If you want to pass in options to the application, you put them at the beginning in the form of `NODE_PORT=9870`.
+
+When you put them all together, you get what I use in my start script:
+
+`NODE_PORT=9870 NODE_ENV=production node server.js >> /tmp/server.log &`
+
+#### server.js
+
+##### Options
+
+- `NODE_ENV` modifies settings specified in [Environments](#environments).
+- `NODE_PORT` controls the port for HTTP requests. It will overwrite the setting in `config.js`. HTTPS is not yet supported.
+
+#### payer.js
+
+##### Options
+
+- `NODE_CLEANUP` is the number of milliseconds between cleanup actions, which removes old shares from the database and performs the [BGREWRITEAOF](http://redis.io/commands/bgrewriteaof) command.
 
 ### Environments
 
-Express checks the `NODE_ENV` environment variable to know what features to turn on. I've configured three:
+Express checks the `NODE_ENV` environment variable to know what features to turn on. I've configured two:
 
-- `development` serves unminified files from the `raw` directory. Logs requests to the console.
-- `testing` serves minified files from the `public` directory. Logs requests to the console.
-- `production` does not serve files. Turns on `trust proxy`. Does not log requests. I run it behind NGINX, which I have set up to serve the files from the `public` directory and log everything.
+- `development` serves files from the `public` directory. Logs requests to the console.
+- `production` does not serve files. Turns on `trust proxy`. Turns on `view cache`. Does not log requests. I run it behind NGINX, which I have set up to serve the files from the `public` directory and log everything.
 
 ## Paying Out
 
@@ -70,3 +72,14 @@ This is a manual process right now, for a lot of reasons. You're welcome to auto
 
 - The `payout.js` file has the line that actually makes the transaction commented out by default. I run it once to make sure the balance will cover the transaction. If it will, I uncomment it, and run it again. When the transaction is made, the transaction ID will be logged. Or an error, depending on what actually happened.
 - To get rid of the processed transactions, run the command `LTRIM withdraw # -1`, replacing the number sign with the number of records processed. In the above example, it would be `2`. This makes sure you don't remove any withdrawal requests that were made since the `LRANGE` command, because that would be bad.
+
+## Changes You Might Care About
+
+### Version 2.0.0
+
+- Brand new look.
+- Using Grunt for minifying and combining front-end files.
+- All the scrypt implementations use the same C++ code base.
+- In Chrome, we now use [PNACL](https://developers.google.com/native-client/dev/) instead of JavaScript.
+- Switched to SASS for CSS.
+- The giant JS file has been split up into manageable chunks.
