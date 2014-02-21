@@ -2,6 +2,7 @@ var fs = require('fs');
 
 var redis = require('../redis');
 var config = require('../config');
+var addresses = require('../addresses');
 
 function home(req, res) {
 	redis.get('session::' + req.session + '::email', function(err, email) {
@@ -45,7 +46,7 @@ function withdrawp(req, res) {
 	// Check the address structure
 	if (typeof address !== 'string'
 		|| address.length !== 34
-		|| !(/^D([123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{33})$/).test(address)) return res.render('withdraw', {
+		|| !addresses(address)) return res.render('withdraw', {
 			withdraw: id
 			, message: 'That address doesn\'t look like a Dogecoin address. Please make sure you copied the whole thing. If you\'re sure it\'s right, please feel free to contact us using the link at the bottom of the page.'
 		});
