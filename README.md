@@ -9,14 +9,13 @@
 - In order to compile the SASS file, you need to install `ruby` and the `sass gem`. Something like `sudo apt-get install ruby` and `sudo gem install sass`.
 - Install `grunt-cli` globally using `npm install grunt-cli --global`. You may need to `sudo` that.
 - Build all the client-side JS and CSS files using `grunt`.
-- Build the scrypt module by changing into the `scrypt` directory and running `make node`.
 
 ### Running
 
 I've gotten a few questions about running the application. So here's some snippets that will hopefully help people get started.
 
-- First of all, there's `node file.js`. It's your basic run command.
-- If you want to log the output to a file, you can add '>> /tmp/file.log'.
+- First of all, there's `node server.js`. It's your basic run command.
+- If you want to log the output to a file, you can add `>> /tmp/file.log`.
 - Putting `&` at the end of the command runs it in the background, so it won't be killed when you close your terminal window or SSH connection.
 - If you want to pass in options to the application, you put them at the beginning in the form of `NODE_PORT=9870`.
 

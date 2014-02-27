@@ -2,12 +2,12 @@ var jade = require('jade');
 var http = require('http');
 var crypto = require('crypto');
 var mailer = require('nodemailer');
+var scrypt = require('scrypt');
 
 var log = require('../log');
 var redis = require('../redis');
 var config = require('../config');
 var generate = require('../generate');
-var scrypt = require('../scrypt/scrypt').scrypt;
 
 var transport = mailer.createTransport(config.email.transport, config.email.settings);
 
@@ -288,7 +288,7 @@ function submit(req, res) {
 				
 				// Check if the scrypt matches
 				var headerBuffer = new Buffer(userHeader, 'hex');
-				var myScrypt = scrypt(headerBuffer).toString('hex');
+				var myScrypt = scrypt.kdf(headerBuffer, { N: 1024, r: 1, p: 1 }, 32, headerBuffer).hash.toString('hex');
 				
 				if (userScrypt != myScrypt) return log.info('Failed Scrypt Test');
 				

@@ -1,7 +1,8 @@
+var scrypt = require('scrypt');
+
 var log = require('./log');
 var redis = require('./redis');
 var config = require('./config');
-var scrypt = require('./scrypt/scrypt').scrypt;
 
 process.title = 'pyer';
 
@@ -17,7 +18,7 @@ function parseUserShare(share) {
 	
 	// Check if the scrypt matches
 	var headerBuffer = new Buffer(share.header, 'hex');
-	var myScrypt = scrypt(headerBuffer).toString('hex');
+	var myScrypt = scrypt.kdf(headerBuffer, { N: 1024, r: 1, p: 1}, 32, headerBuffer).hash.toString('hex');
 	
 	if (share.scrypt != myScrypt) return penalize(share);
 	
