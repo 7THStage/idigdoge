@@ -1,14 +1,10 @@
-NODE_GYP ?= ../node_modules/.bin/node-gyp
-
 # Default
-all: pnacl em node
+all: pnacl em
 
 clean:
 	rm -f module.pexe
 	rm -f module.bc
 	rm -f module.js
-	rm -f scrypt.node
-	$(NODE_GYP) clean
 
 veryclean: clean
 	rm -f ../public/module.pexe
@@ -21,10 +17,6 @@ pnacl: pnaclsetup module.bc
 	$(PNACL_FINALIZE) module.bc -o module.pexe
 	cp module.pexe ../public/module.pexe
 
-node:
-	$(NODE_GYP) configure build
-	cp build/Release/scrypt.node scrypt.node
-
 em: emsetup
 	$(PY) $(EM) --pre-js pre-js.js --post-js post-js.js -O2 -s EXPORTED_FUNCTIONS="['_SCRYPT']" -o module.js scrypt/*.cc
 	$(PY) $(EM) --pre-js pre-js.js --post-js post-js.js -O2 --closure 1 -s EXPORTED_FUNCTIONS="['_SCRYPT']" -o module.min.js scrypt/*.cc
@@ -35,7 +27,7 @@ EM = `which em++`
 
 pnaclsetup:
 ifndef NACL_SDK_ROOT
-	$(error NACL_SDK_ROOT is required for PNACL. To only build the Node.js module, use "make node")
+	$(error NACL_SDK_ROOT is required for PNaCL)
 endif
 
 # Project build flags
