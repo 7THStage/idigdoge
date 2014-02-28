@@ -1,0 +1,49 @@
+doctype html
+html
+	head
+		include head
+		title Mint Harvest - Mine Mint Now.
+	body.unsupported
+		#intro.page.grey.top.minimal: .inner
+			h2 back for more?
+			h1.color.dark Mint Harvest
+
+		#timerunningout.page.white: .inner
+			h1 The Time to MINT is Now.
+			p Once this counter reaches zero, mining Mintcoin will no longer be an option. After that, all coins will be minted through an energy efficient Proof of Stake system. 
+			#countdown 
+				div.timer
+				div.labels
+					span.days days
+					span.hours hours
+					span.minutes minutes
+					span.seconds seconds
+
+
+		#yougotcoins.page.grey: .inner
+			h1 Your Mintcoins
+			p.unsupported On many computers, this page actually allows people to mine Mintcoins right in their browser! It looks like yours is unsupported though. Or maybe you've disabled JavaScript?
+			p.optional Want to get a taste of cryptocurrencies? You can actually mine yourself some Mintcoins by clicking <em>Dig</em>!
+			
+			.auto.optional
+				.columns-2
+					.column-1.info
+						#rate-block
+							strong -
+							| Not Mining
+						button#mining-toggle-btn.button Loading...
+					.column-2.info
+						#balance-block
+							strong -
+							| Mintcoins
+						button#withdraw-btn.button(onclick='withdraw()') Withdraw
+				
+				form#email-form
+					span Mining For
+					.box: input(type='email', placeholder='Your Email', value='#{email}')
+					.box: input(type='submit', value='Save')
+
+		#footer.page.color: .inner
+			include footer
+		#pnacl-block
+		script(type='text/javascript', src='/public/main.js?#{public_version}')
