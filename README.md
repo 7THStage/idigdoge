@@ -76,6 +76,12 @@ This is a manual process right now, for a lot of reasons. You're welcome to auto
 
 ## Changes You Might Care About
 
+### Version 2.0.2
+
+- Use `PORT` or `NODE_PORT` environment variables.
+- The default config file is now separate.
+- There's options for which scrypt implementation you use.
+
 ### Version 2.0.1
 
 - Minor changes for HTTPS.
