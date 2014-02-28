@@ -29,7 +29,7 @@ When you put them all together, you get what I use in my start script:
 ##### Options
 
 - `NODE_ENV` modifies settings specified in [Environments](#environments).
-- `NODE_PORT` controls the port for HTTP requests. It will overwrite the setting in `config.js`. HTTPS is not yet supported.
+- `NODE_PORT` or `PORT` controls the port for HTTP requests. It will overwrite the setting in `config.js`. HTTPS is not yet supported.
 
 #### payer.js
 

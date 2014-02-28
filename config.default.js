@@ -24,7 +24,7 @@ module.exports = {
 		, transport: 'Sendmail'
 		, settings: {}
 	}
-	// The default port for the API server; it can also be set using the NODE_PORT environment variable
+	// The default port for the API server; it can also be set using the NODE_PORT or PORT environment variables, which will override this setting
 	, server: {
 		port: 9876
 	}
