@@ -3,11 +3,13 @@ var redis = require('redis');
 var log = require('./log');
 var config = require('./config');
 
-//Compatibility with Heroku
+// var client = redis.createClient(config.redis || '');
 if (process.env.REDISTOGO_URL) {
-	log.info("Redis:"+rtg.auth.split(":")[0]+":"+rtg.auth.split(":")[1]);
+	var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+	var client = redis.createClient(rtg.port, rtg.hostname);
 	client.auth(rtg.auth.split(":")[1]);
-	log.info('Using Addon REDISTOGO');
+	log.info('Using Addon REDISTOGO on Heroku');
+
 } else {
     var client = redis.createClient(config.redis || '');
 }
