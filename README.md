@@ -4,7 +4,7 @@
 
 ### First Run
 
-- Fill out the `config.js` file.
+- Copy `config.default.js` to `config.js`, and fill it out with the appropriate details.
 - Install the dependencies using `npm install`.
 - In order to compile the SASS file, you need to install `ruby` and the `sass gem`. Something like `sudo apt-get install ruby` and `sudo gem install sass`.
 - Install `grunt-cli` globally using `npm install grunt-cli --global`. You may need to `sudo` that.
