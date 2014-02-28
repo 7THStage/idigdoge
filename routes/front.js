@@ -6,9 +6,13 @@ var addresses = require('../addresses');
 
 function home(req, res) {
 	redis.get('session::' + req.session + '::email', function(err, email) {
-		res.render('index', {
-			email: (typeof email === 'string' ? email : '')
-		});
+		if(typeof email === 'string') {
+			res.render('mine', {
+				email: (typeof email === 'string' ? email : '')
+			});
+		} else {
+			res.render('index', { email : ''});
+		}
 	});
 };
 

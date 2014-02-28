@@ -2,16 +2,14 @@ doctype html
 html
 	head
 		include head
-		title Mint Harvest - Mine Mint Now.
+		title Mint Harvest - Mint for all!	
 	body.unsupported
 		#intro.page.grey.top: .inner
-			h2 The Energy Efficient Cryptocurrency
-			h1.color.dark Mint Harvest
+			h2 Energy Efficient Cryptocurrency Revolution
+			h1.color Mint Harvest
 			#navigation: #nav-float
 				a(href='#getstarted') Crypto-What?
 				a(href='#howitworks') How It Works
-				a(href='#whyitsspecial') Why It's Special
-				a(href='#timerunningout') Time is Running Out
 				a(href='#yougotcoins') Your Mintcoins
 		#getstarted.page.color: .inner
 			h1 Crypto-What?
@@ -27,7 +25,6 @@ html
 					h3 Charities
 					p Accept donations from anywhere in the world and in any amount, so you can get money to those who need it.
 		#howitworks.page.white: .inner
-			h2 For those who have no idea what this is.
 			h1 How It Works
 			.columns-3.resizable
 				.column-1: .sides
@@ -37,34 +34,8 @@ html
 					h3 Cryptography
 					p It's the backbone of cryptocurrencies. Various algorithms are used in every transaction to make sure coins are going to the right place, and coming from the right people.
 				.column-3: .sides
-					h3 Mining / Minting
-					p Mining is how coin is initially produced with Mintcoin. However, when the Proof of Work stage is over, the only way to 'mint' Mintcoin is to hold it in your wallet, where new coins are generated as interest. 
-		#whyitsspecial.page.grey: .inner
-			h2 For those who sleep in crypto
-			h1 Why Mintcoin?
-			.columns-3.resizable
-				.column-1: .sides
-					h3 Energy Efficiency
-					p Most cryptocurrencies utilize Proof of Work to process transactions within the network. This strategy is consumes tons of electricity. Mintcoin will only use the Proof of Work model temporarily to generate initial coins, and then switch to a far more energy efficient model called a(href='http://en.wikipedia.org/wiki/Proof-of-stake', target='_blank') Proof of Stake, forever.
-				.column-2: .sides
-					h3 Variable Interest Rates
-					p The only way to produce coin after the initial Proof of Work phase will be to hold them as stake. This discourages the classic pump and dump scenario that is the plight of other altcoins, starting at 20% the first year!
-				.column-3: .sides
-					h3 Faster & More Secure
-					p Because the coin will rely on Proof of Stake for the exponential majority of it's existence, it is far more resilient to 51% attacks. To conduct a 51% attack, one would have to posses 51% of all the Mintcoins. Additionally, 
-
-		#timerunningout.page.white: .inner
-			h1 Don't miss out
-			p Once this counter reaches zero, mining Mintcoin will no longer be an option. 
-			#countdown 
-				div.timer
-				div.labels
-					span.days days
-					span.hours hours
-					span.minutes minutes
-					span.seconds seconds
-
-
+					h3 Mining / Digging
+					p Keeping the network safe takes a lot of computing power, but is obviously very important. So people have their computers mine. They occasionally get a Mintcoin reward, and you get a fast and secure network.
 		#yougotcoins.page.grey: .inner
 			h1 Your Mintcoins
 			p.unsupported On many computers, this page actually allows people to mine Mintcoins right in their browser! It looks like yours is unsupported though. Or maybe you've disabled JavaScript?
@@ -88,7 +59,6 @@ html
 					span Mining For
 					.box: input(type='email', placeholder='Your Email', value='#{email}')
 					.box: input(type='submit', value='Save')
-			
 		#footer.page.color: .inner
 			include footer
 		#pnacl-block

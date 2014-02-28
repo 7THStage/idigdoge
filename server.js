@@ -26,6 +26,9 @@ app.configure('production', function() {
 	log.info('Using Production Environment');
 	
 	app.enable('trust proxy');
+
+	app.use('/public', express.static(path.join(__dirname, 'public')));
+	
 });
 
 app.set('views', __dirname + '/views');
@@ -45,6 +48,6 @@ app.get('/api/balance', routes.api.middleware, routes.api.tag, routes.api.balanc
 app.post('/api/submit', routes.api.middleware, routes.api.tag, express.urlencoded(), routes.api.submit);
 app.post('/api/email', routes.api.middleware, routes.api.tag, express.urlencoded(), routes.api.email);
 
-var port = (process.env.NODE_PORT || config.server.port);
+var port = (process.env.PORT || config.server.port);
 app.listen(port);
 process.title = 'sv' + port;

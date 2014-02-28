@@ -1,10 +1,11 @@
-@import url("https://fonts.googleapis.com/css?family=Oswald:400,300")
+@import url("http://fonts.googleapis.com/css?family=Oswald:400,300")
 
 // Variables
-// $color-color: #c6491a
+$color-green: #c6491a
 $color-color: #bfa76f
 $color-grey: #333333
 $color-white: #fafafa
+$color-darker: #111111
 
 // Helpers
 =respond-to($name)
@@ -212,6 +213,8 @@ h3
 // Default Page Layout
 .inner
 	padding: 48px 24px
+	margin: 0 auto
+	max-width: 1024px
 
 	+respond-to(small)
 		padding: 42px 12px
@@ -261,6 +264,8 @@ form
 	color: $color-grey
 .color
 	color: $color-color
+.color.dark
+	color: $color-grey
 .white
 	color: $color-white
 
@@ -268,6 +273,16 @@ form
 .page.grey
 	background-color: $color-grey
 	color: $color-white
+.page.grey.top 
+	background-image: url(mint2.jpg)
+	background-repeat: no-repeat 
+	background-position-x: center 
+	background-position-y: center 
+	background-attachment: fixed
+	-webkit-background-size: cover
+	-moz-background-size: cover
+	-o-background-size: cover
+	background-size: cover
 .page.white
 	background-color: $color-white
 	color: $color-grey
@@ -275,8 +290,51 @@ form
 	background-color: $color-color
 	color: $color-white
 
+.page.top.minimal
+	.inner
+		padding-bottom: 10px
+
+#countdown 
+	text-align: center
+	display: inline-block
+	margin: 25px auto 0
+
+	.cntSeparator
+		display: none
+
+	#cnt_1
+		margin-right: 20px
+	#cnt_4
+		margin-right: 20px
+	#cnt_7
+		margin-right: 20px
+
+	.labels
+		span
+			width: 106px
+			margin-right: 20px
+			text-align: center
+			display: inline-block
+
+#yougotcoins
+	.auto.optional 
+		background: $color-darker
+		width: auto
+		padding: 20px
+		margin: 0 auto
+		max-width: 520px
+		border-radius: 23px
+		border: 3px solid #444
+
+	.columns-2 
+		display: block
+		margin: 0 auto
+		max-width: 480px
+
+
 // Pages
 #intro
+
 	h1
 		font-size: 60px
 	
@@ -291,21 +349,20 @@ form
 		
 		a
 			display: block
-			border-top: 1px solid $color-white
 			padding: 12px 0
 			text-decoration: none
 			font-size: 18px
 			letter-spacing: 1px
+			background-color: rgba(0, 0, 0, 0.4)
 			+transition(background-color 0.3s)
 			
 			+respond-to(big)
 				display: inline-block
 				padding: 12px 24px
 				margin: 0 6px
-				border: 1px solid $color-white
 				border-radius: 5px
 		a:hover
-			background-color: rgba(0, 0, 0, 0.15)
+			background-color: rgba(0, 0, 0, 0.90)
 		
 		+respond-to(big)
 			#nav-float
