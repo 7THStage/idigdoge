@@ -22,7 +22,7 @@ module.exports = {
 	}
 	// The default port for the API server; it can also be set using the NODE_PORT environment variable
 	, server: {
-		port: 5000
+		port: 9877
 	}
 	// It works on a predictive model, so configure these values appropriately for how much you have been making
 	, payouts: {
