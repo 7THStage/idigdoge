@@ -26,6 +26,9 @@ app.configure('production', function() {
 	log.info('Using Production Environment');
 	
 	app.enable('trust proxy');
+	
+	app.use('/public', express.static(path.join(__dirname, 'public')));
+	
 });
 
 app.set('views', __dirname + '/views');
