@@ -9,6 +9,7 @@
 - In order to compile the SASS file, you need to install `ruby` and the `sass gem`. Something like `sudo apt-get install ruby` and `sudo gem install sass`.
 - Install `grunt-cli` globally using `npm install grunt-cli --global`. You may need to `sudo` that.
 - Build all the client-side JS and CSS files using `grunt`.
+- (Optional) Build the scrypt module by changing into the `scrypt` directory and running `make node`.
 
 ### Running
 
