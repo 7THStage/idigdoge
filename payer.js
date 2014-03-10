@@ -5,85 +5,106 @@ var scrypt = require('./scrypt');
 
 process.title = 'pyer';
 
-function penalize(share) {
-	// TODO: Something in this function.
+var processedShareCount = false;
+
+function cacheShareCount() {
+	redis.zcount('shares::accepted', Date.now() - (1000 * 60 * 60), '+inf', function(err, count) {
+		if (err) return log.error(err);
+		
+		// Prevent dividing by zero later on
+		if (count < 1) processedShareCount = 1;
+		else processedShareCount = count;
+	});
 };
 
-function parseUserShare(share) {
-	var scryptBuffer = new Buffer(share.scrypt, 'hex');
+// The main loop gets a custom error function so the whole looping thing isn't so annoying to do
+function mainLoopError(delay, err) {
+	if (err) log.error(err);
 	
-	// Check if it passes the difficulty test
-	if (scryptBuffer[31] != 0 || scryptBuffer[30] > 6) return penalize(share);
+	if (delay) setTimeout(mainLoop, 500);
+	else setImmediate(mainLoop);
+};
+
+function mainLoop() {
+	if (processedShareCount === false) return mainLoopError(true);
 	
-	// Check if the scrypt matches
-	var headerBuffer = new Buffer(share.header, 'hex');
-	var myScrypt = scrypt(headerBuffer).toString('hex');
-	
-	if (share.scrypt != myScrypt) return penalize(share);
-	
-	// Make sure they haven't submitted this before
-	redis.zscore('shares::accepted', share.header, function(err, score) {
-		if (err) return log.error(err, share);
-		if (score) return penalize(share);
+	redis.lpop('shares::user', function(err, share) {
+		if (err) return mainLoopError(true, err);
+		if (!share) return mainLoopError(true);
 		
-		// TODO: Give them some reputation
+		// So, we've got a share
+		share = JSON.parse(share);
 		
-		// Add it to the tracker
-		redis.zadd('shares::accepted', Date.now(), share.header);
+		// First, we check to make sure the share is valid
+		var scryptBuffer = new Buffer(share.scrypt, 'hex');
+		if (scryptBuffer[31] != 0 || scryptBuffer[30] > 6) return mainLoopError(false);
 		
-		// Add money to their account
-		redis.zcount('shares::accepted', Date.now() - (1000 * 60 * 60), '+inf', function(err, count) {
-			if (err) return log.error(err, share);
+		var headerBuffer = new Buffer(share.header, 'hex');
+		var checkScrypt = scrypt(headerBuffer).toString('hex');
+		if (share.scrypt != checkScrypt) return mainLoopError(false);
+		
+		// Make sure they aren't submitting the same work twice
+		redis.zscore('shares::accepted', share.header, function(err, score) {
+			if (err) return mainLoopError(true, err);
+			if (score) return mainLoopError(false);
 			
-			// No dividing by zero!
-			if (!count || count < 1) count = 1;
+			// Add it to the list
+			redis.zadd('shares::accepted', Date.now(), share.header);
 			
-			// Calculate the payout
-			var amount = (config.payouts.targetPerHour / count);
-			if (amount > config.payouts.maxPerShare) amount = config.payouts.maxPerShare;
-			
-			// Figure out if this session has an email associated with it
+			// Find out if this session has an email associated with it or not
 			redis.get('session::' + share.session + '::email', function(err, email) {
-				if (err) return log.error(err, share);
+				if (err) return mainLoopError(true, err);
 				
-				// Save it to the proper place
-				var key = null;
+				// Figure out their payout
+				var amount = (config.payouts.targetPerHour / processedShareCount);
+				if (amount > config.payouts.maxPerShare) amount = config.payouts.maxPerShare;
+				
+				// Save it to the email balance when available, or the session when not
+				var key;
 				if (email) key = 'balance::email::' + email;
 				else key = 'balance::session::' + share.session;
 				
 				log.info(key + ' ' + amount);
 				
-				redis.incrbyfloat(key, amount);
+				// Finally, we actually increase the user's balance
+				redis.incrbyfloat(key, amount, function(err) {
+					if (err) return mainLoopError(true, err);
+					
+					// Everything went okay. Huzzah!
+					setImmediate(mainLoop);
+				});
 			});
 		});
 	});
 };
 
-function mainLoop() {
-	redis.lpop('shares::user', function(err, share) {
-		if (err) return log.error(err);
-		if (share) parseUserShare(JSON.parse(share));
-	});
-};
+// We want to run this once right away
+cacheShareCount();
 
-setInterval(mainLoop, 500);
+// We also want to run it every couple of minutes so the numbers stay up to date
+setInterval(cacheShareCount, 1000 * 60 * 2);
+
+// We'll give it a second to get the share count, and then the main loop will run at top speed
+setTimeout(mainLoop, 1000);
 
 // Cleanup
-
 function cleanup() {
 	redis.zremrangebyscore('shares::accepted', 0, Date.now() - config.cleanupIgnore, function(err, rem) {
 		if (err) return log.error('Cleanup Error', err);
-		
+
 		log.info('Removed ' + rem + ' Old Shares');
-		
+
 		redis.bgrewriteaof(function(err) {
 			if (err) return log.error('Background Rewrite Error', err);
 		});
 	});
 };
 
-var cleanTime = (process.env.NODE_CLEANUP || config.cleanupInterval);
+var cleanTime = (process.env.NODE_CLEANUP || config.cleanupInterval || false);
 if (cleanTime) {
 	if (typeof cleanTime === 'string') cleanTime = parseInt(cleanTime, 10);
-	if (typeof cleanTime === 'number' && !isNaN(cleanTime) && cleanTime > 0 && isFinite(cleanTime)) setInterval(cleanup, cleanTime);
+	if (typeof cleanTime === 'number' && !isNaN(cleanTime) && cleanTime > 0 && isFinite(cleanTime)) {
+		process.title = 'pyerc';
+		setInterval(cleanup, cleanTime);
+	}
 }
